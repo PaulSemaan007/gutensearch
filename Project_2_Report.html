@@ -151,29 +151,29 @@
 
 <h1 class="title">GutenSearch</h1>
 <p class="subtitle">A Mini Search Engine over Classic Literature</p>
-<p class="byline">Paul Semaan &nbsp; CECS 429 &nbsp; Professor Xin Qin &nbsp; Spring 2026</p>
+<p class="byline">Paul Semaan &nbsp; Search Engine Technology &nbsp; Professor Xin Qin &nbsp; Spring 2026</p>
 
 <h2>Abstract</h2>
-<p><span class="abstract-label">Abstract.</span> GutenSearch is a working mini search engine built over ten classic public domain novels from Project Gutenberg. The system implements the full stack of techniques covered in CECS 429 in one running pipeline. That includes tokenization, a positional inverted index, a 3-gram index for wildcard queries, Boolean and phrase queries, ranked retrieval using both tf-idf cosine and BM25, and Damerau-Levenshtein spelling correction. The build side is a single Python script that turns raw books into a JSON index. The search side is a static web page that runs every query directly in the browser, with no backend. On a corpus of 778,201 tokens across 22,794 unique terms, the index serializes to 5.9 MB and most queries return in under 15 milliseconds.</p>
+<p><span class="abstract-label">Abstract.</span> GutenSearch is a small search engine I built over ten classic novels from Project Gutenberg. It puts all the search ideas from this class into one working program. That includes breaking text into words, building an inverted index, handling Boolean searches, phrase searches, and wildcard searches, ranking results two different ways with tf-idf and BM25, and fixing spelling mistakes. A Python script turns the books into one big index file. A web page then loads that file and does all the searching right in the browser, with no server. The corpus has about 778,000 words and 22,794 different terms. The index file is 5.9 MB and most searches finish in under 15 milliseconds.</p>
 
 <h2>1. Introduction</h2>
-<p>Everything we covered in CECS 429 tends to live as a separate formula on a separate slide. Tokenization is one lecture. Inverted indexes is another. tf-idf is a third. BM25, k-grams, and spelling correction are each introduced on their own. You only really see how they fit together when you put them in the same system, and that is what this project does. I wanted a working artifact I could type queries into, not just a stack of disconnected algorithms.</p>
-<p>The corpus is ten well known public domain novels from Project Gutenberg. They were chosen because the books are linguistically rich, freely redistributable, large enough that ranking has something interesting to do, and familiar enough that you can sanity check the results just by thinking about the books. A query for the words vampire blood transylvania ought to put Dracula at the top. A phrase query for mr darcy should match exactly one book.</p>
-<p>The main contribution is that GutenSearch is a complete IR pipeline from raw Project Gutenberg files to ranked search results, end to end, with no external dependencies on either side. The build runs on the Python standard library alone. The search runs in any browser. The system is deployed live at <a href="https://paulsemaan007.github.io/gutensearch/">paulsemaan007.github.io/gutensearch</a>.</p>
+<p>Everything we learned this semester came one piece at a time. Tokenization one week, inverted indexes another, tf-idf after that, then BM25, k-grams, and spelling correction. Each one made sense on its own, but you do not really get how they connect until you build something that uses all of them at once. That is what this project is. I wanted something I could actually type a search into, not just a pile of separate algorithms.</p>
+<p>I picked ten famous novels from Project Gutenberg as the books to search. They are free to use, they are long enough that ranking actually matters, and they are well known enough that you can tell if the results make sense just by knowing the books. If you search vampire blood transylvania, Dracula should come up first. If you search for the exact phrase mr darcy, only one book should match.</p>
+<p>The point of the project is that it is a full search engine, start to finish, from raw book files all the way to ranked results. It does not lean on any outside libraries. The build script only uses what comes with Python. The search runs in any browser. The whole thing is live at <a href="https://paulsemaan007.github.io/gutensearch/">paulsemaan007.github.io/gutensearch</a>.</p>
 
 <h2>2. Related Work</h2>
-<p>The methods used here are textbook IR, and the canonical reference is the Manning, Raghavan, and Sch&uuml;tze textbook, Introduction to Information Retrieval [1]. The tf-idf scoring scheme, cosine similarity ranking, SMART notation, positional postings model, k-gram index for wildcards, and Damerau-Levenshtein spelling correction all come from that book.</p>
-<p>The BM25 ranking function in this project is the version derived by Robertson and Zaragoza [2], which gives the standard parameter defaults, k1 around 1.5 and b around 0.75, that are still considered reasonable today. BM25 differs from tf-idf cosine in two ways that matter for a mixed corpus. It saturates term frequency through the k1 parameter, and it normalizes by document length explicitly. The length normalization matters here because the books range from around 27,000 tokens for Alice in Wonderland up to 163,000 tokens for Dracula, roughly a six to one ratio.</p>
-<p>For a production comparison, Apache Lucene [3] is the canonical open source search engine, used inside both Elasticsearch and Solr. Its architecture matches the general shape of GutenSearch, just at much larger scale and with more sophisticated index encoding such as variable byte and PFOR compression. GutenSearch can be thought of as a minimal in browser analog of one Lucene segment with a small corpus.</p>
-<p>The spelling correction component draws on the noisy channel formulation of Kernighan, Church, and Gale [4], although the probability model here is simplified down to a direct edit distance ranking with document frequency as the tie breaker. The k-gram pre-filter comes from the original work of Angell, Freund, and Willett [5] on trigram overlap for approximate string matching.</p>
+<p>The methods I used are all standard. The main book they come from is Introduction to Information Retrieval by Manning, Raghavan, and Sch&uuml;tze [1]. The tf-idf scoring, the cosine ranking, the positional index, the k-gram index for wildcards, and the spelling correction all come straight out of that book.</p>
+<p>The BM25 ranking comes from a paper by Robertson and Zaragoza [2]. I used their normal settings, k1 around 1.5 and b around 0.75. BM25 is different from tf-idf in two ways. It does not let one very common word take over the score, and it adjusts for how long a book is. The length part matters here because the books are very different sizes. Alice in Wonderland is about 27,000 words and Dracula is about 163,000, so one is roughly six times the other.</p>
+<p>For comparison, Apache Lucene [3] is the big open source search engine that powers Elasticsearch and Solr. It works the same general way as GutenSearch, just much bigger, and with smarter ways of compressing the index. You can think of GutenSearch as a tiny version of one piece of Lucene, running in the browser on a small set of books.</p>
+<p>The spelling correction is based on the idea from Kernighan, Church, and Gale [4], but simpler. Instead of a full probability model, I just rank the suggestions by how few edits it takes to get from the typo to a real word, and break ties by how common the word is. The trick of using shared 3-grams to find candidate words quickly comes from Angell, Freund, and Willett [5].</p>
 
 <h2>3. Methods</h2>
 
 <h3>3.1 Corpus</h3>
-<p>The corpus is ten public domain novels downloaded from Project Gutenberg by the build script. They span genres and eras, from Austen's social satire in 1813 to Wells's science fiction in 1898. The titles, IDs, and approximate token counts are in Table 1.</p>
+<p>The build script downloads ten public domain novels from Project Gutenberg. They cover a range of styles and time periods, from Austen in 1813 to Wells in 1898. The full list is in Table 1, with rough word counts.</p>
 <table>
   <thead>
-    <tr><th>Gutenberg ID</th><th>Title</th><th>Author</th><th>Tokens (approx)</th></tr>
+    <tr><th>Gutenberg ID</th><th>Title</th><th>Author</th><th>Words (approx)</th></tr>
   </thead>
   <tbody>
     <tr><td>1342</td><td>Pride and Prejudice</td><td>Jane Austen</td><td>122,000</td></tr>
@@ -188,10 +188,10 @@
     <tr><td>74</td>  <td>The Adventures of Tom Sawyer</td><td>Mark Twain</td><td>71,000</td></tr>
   </tbody>
 </table>
-<p class="caption"><b>Table 1.</b> The corpus, with approximate token counts after stripping the Project Gutenberg header and footer from each file.</p>
+<p class="caption"><b>Table 1.</b> The corpus, with rough word counts after the Project Gutenberg header and footer are stripped off each file.</p>
 
 <h3>3.2 System Architecture</h3>
-<p>The system is split into two halves. The build side is a single Python script, build_index.py, that downloads the corpus, tokenizes it, builds the inverted and k-gram indexes, and writes everything to JSON. The search side is a static web page made of index.html, style.css, and app.js, which fetches the JSON and runs every query in the browser. The pipeline is shown in Figure 1.</p>
+<p>The system has two parts. The first part is a Python script, build_index.py, that downloads the books, breaks them into words, builds the indexes, and saves it all as one JSON file. The second part is a web page, made of index.html, style.css, and app.js, that loads that JSON file and does all the searching in the browser. Figure 1 shows how it flows.</p>
 <figure>
   <svg viewBox="0 0 720 130" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -206,8 +206,8 @@
       <line x1="155" y1="65" x2="195" y2="65" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arr)"/>
       <rect x="200" y="20" width="150" height="90" rx="4" fill="#f8f9fa" stroke="#bdc1c6"/>
       <text x="275" y="55" text-anchor="middle" font-weight="700" fill="#202124">build_index.py</text>
-      <text x="275" y="76" text-anchor="middle" fill="#5f6368" font-size="11">tokenize, index,</text>
-      <text x="275" y="91" text-anchor="middle" fill="#5f6368" font-size="11">delta encode</text>
+      <text x="275" y="76" text-anchor="middle" fill="#5f6368" font-size="11">break into words,</text>
+      <text x="275" y="91" text-anchor="middle" fill="#5f6368" font-size="11">build the indexes</text>
       <line x1="355" y1="65" x2="395" y2="65" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arr)"/>
       <rect x="400" y="20" width="150" height="90" rx="4" fill="#f8f9fa" stroke="#bdc1c6"/>
       <text x="475" y="55" text-anchor="middle" font-weight="700" fill="#202124">index.json</text>
@@ -216,64 +216,64 @@
       <line x1="555" y1="65" x2="595" y2="65" stroke="#5f6368" stroke-width="1.5" marker-end="url(#arr)"/>
       <rect x="600" y="20" width="120" height="90" rx="4" fill="#f8f9fa" stroke="#bdc1c6"/>
       <text x="660" y="55" text-anchor="middle" font-weight="700" fill="#202124">Browser</text>
-      <text x="660" y="76" text-anchor="middle" fill="#5f6368" font-size="11">fetch and search</text>
+      <text x="660" y="76" text-anchor="middle" fill="#5f6368" font-size="11">load and search</text>
       <text x="660" y="91" text-anchor="middle" fill="#5f6368" font-size="11">in memory</text>
     </g>
   </svg>
 </figure>
-<p class="caption"><b>Figure 1.</b> The GutenSearch pipeline. Offline build, online search, no backend.</p>
-<p>The advantage of this split is that the system is trivially deployable. Pushing the repository to GitHub and enabling GitHub Pages produces a live demo URL with no configuration. The cost is that the entire index has to be loaded into memory on first query, but for a corpus of this size that takes well under a second on a typical laptop.</p>
+<p class="caption"><b>Figure 1.</b> How GutenSearch works. The build runs once, the search runs in the browser, and there is no server.</p>
+<p>The good thing about doing it this way is that it is really easy to put online. You push it to GitHub, turn on GitHub Pages, and you get a live link with no setup. The downside is that the whole index has to load into memory before the first search. For ten books that takes well under a second on a normal laptop.</p>
 
 <h3>3.3 Tokenization and Indexing</h3>
-<p>Tokenization is intentionally simple. The text is matched against the regular expression for runs of letters and apostrophes, every match is lower-cased, and apostrophes are dropped, so can't becomes cant and O'Brien becomes obrien. I deliberately did not apply a stemmer. A full Porter implementation would have added complexity for a small accuracy gain on this corpus, and a half-baked stemmer would have introduced confusing results. The cost of skipping stemming is that searches for run do not match running, which the user-facing query syntax compensates for with wildcards such as runn-star.</p>
-<p>Stopwords are recorded as metadata but kept in the postings, which is necessary for phrase queries to work properly. A phrase like of the dead would break if the words of and the were thrown away. The ranked retrieval algorithms naturally down-weight stopwords through idf anyway.</p>
-<p>The positional inverted index maps each unique term to a list of document id and position list pairs. To keep the JSON file size down, position lists use delta encoding. The first position is stored absolutely, and every subsequent one is stored as the difference from the previous. This reduces position storage by roughly 40 percent compared to absolute positions. A single posting looks like this.</p>
+<p>Breaking text into words is kept simple. The script grabs runs of letters and apostrophes, makes everything lowercase, and drops the apostrophes, so can't becomes cant and O'Brien becomes obrien. I chose not to use a stemmer. A real one like Porter is a lot of extra code for a small gain on a corpus this size, and a sloppy one would just give weird results. The trade-off is that searching run will not match running. To make up for that, users can use a wildcard like runn* instead.</p>
+<p>Common words like the and of are noted but kept in the index. They have to stay, or phrase searches break. A phrase like of the dead would not work if those words were thrown out. The ranking math already gives common words a low weight, so there is no need to remove them.</p>
+<p>The index keeps, for every word, a list of which books it shows up in and where in each book. To keep the JSON file small, the positions are stored as gaps instead of full numbers. The first position is the real number, and after that each one is just how far it is from the one before. That makes the position data about 40 percent smaller. One entry looks like this.</p>
 <div class="codeblock">term         darcy
 df           1
-postings     document 1342, at token positions 147, 312, 88, 203, and so on</div>
-<p>The 3-gram index supports wildcard queries. Every term is padded with a sentinel dollar sign at both ends, then each trigram of the padded term is mapped to that term. At query time the wildcard pattern is decomposed into its definite trigrams, meaning the ones that contain no asterisk, the candidate vocabulary is the intersection of the term lists for those trigrams, and the candidates are filtered against the actual regex pattern to drop the inevitable false positives.</p>
+postings     document 1342, at word positions 147, 312, 88, 203, and so on</div>
+<p>The 3-gram index is what makes wildcard searches work. Every word is padded with a dollar sign at each end, and then every group of three letters in that padded word points back to the word. When you run a wildcard search, the system takes the parts of the pattern with no asterisk, finds the words that contain all of those 3-grams, and then checks each one against the real pattern to throw out the wrong matches.</p>
 
 <h3>3.4 Query Evaluation</h3>
-<p>The system supports four query modes and auto-detects which one to use from the query string. A double-quoted query is treated as a phrase. A query containing an asterisk is treated as a wildcard. A query containing the keywords AND, OR, or NOT is treated as Boolean. Everything else is a free-text ranked query.</p>
-<p>Boolean queries go through a small shunting-yard parser that converts to reverse Polish notation, with AND and OR as binary operators. A NOT followed by a term is collapsed into a single negated token at the lexing stage, which avoids the awkwardness of mixing unary and binary operators in the same precedence table. The evaluator walks the RPN expression and performs set intersection, union, or difference against the full document set.</p>
-<p>Phrase queries retrieve the positional posting lists for all n terms in the phrase, intersect the document sets, then for each candidate document walk the position list of the first term and binary-search every subsequent term's positions for the consecutive offset. The first match in a document is enough, and the algorithm short-circuits.</p>
-<p>Ranked queries use either tf-idf cosine or BM25, selectable in the UI. Both return the top K, configurable in the UI with a default of 10. The scoring formulas are below.</p>
+<p>There are four kinds of search, and the system figures out which one you want from what you type. Quotes mean a phrase search. An asterisk means a wildcard search. The words AND, OR, or NOT mean a Boolean search. Anything else is a normal ranked search.</p>
+<p>Boolean searches get parsed with a shunting-yard parser that turns the query into reverse Polish notation. AND and OR work on two things at a time. NOT plus a word gets merged into one negated token early on, which keeps the parser simple. Then the system walks through the parsed query and does set intersection for AND, set union for OR, and set difference for NOT.</p>
+<p>Phrase searches grab the position lists for every word in the phrase and find the books that have all of them. Then they check the positions. For each spot the first word appears, the system checks whether the next word is right after it, and so on down the phrase. As soon as one full match is found in a book, it stops looking.</p>
+<p>Ranked searches use either tf-idf cosine or BM25. You pick which one with a dropdown. Both return the top results, ten by default, and you can change that number. The formulas are below.</p>
 <div class="formula">
   <div class="flabel">tf-idf cosine, lnc.ltc weighting</div>
-  score(q, d) = sum over t in q of (1 + log tf_qt) &times; log(N / df_t) &times; (1 + log tf_dt), divided by the product of the query norm and the document norm
+  score(q, d) = sum over t in q of (1 + log tf_qt) &times; log(N / df_t) &times; (1 + log tf_dt), divided by the query norm times the document norm
 </div>
 <div class="formula">
   <div class="flabel">BM25, with k1 = 1.5 and b = 0.75</div>
   score(q, d) = sum over t in q of idf(t) &times; (k1 + 1) tf_dt, divided by (tf_dt + k1 (1 &minus; b + b &times; |d| / avgdl))
 </div>
-<p>The idf term for BM25 is computed as log of ((N &minus; df + 0.5) divided by (df + 0.5), plus 1). The lnc document weights are precomputed at build time, so the query-time work is just term lookup, multiplication, and accumulation.</p>
+<p>The idf part of BM25 is worked out with the formula log of ((N &minus; df + 0.5) over (df + 0.5), plus 1). The document weights for tf-idf are figured out ahead of time during the build, so the only work left at search time is looking up terms, multiplying, and adding.</p>
 
 <h3>3.5 Spelling Correction</h3>
-<p>If a ranked query returns no results, the system tries to correct the first non-stopword query term. It takes the trigrams of the misspelled query, finds candidate vocabulary terms whose trigram overlap with the misspelling, measured by Jaccard similarity, is at least 0.3, then scores every surviving candidate by Damerau-Levenshtein edit distance with document frequency as the tie-breaker. The single best candidate is offered in the UI as a suggestion the user can click to re-run.</p>
+<p>If a ranked search finds nothing, the system tries to fix the first real word in the query. It looks at the 3-grams of the misspelled word, finds words in the index that share enough of those 3-grams, and ranks those by how few edits it takes to get from the typo to the real word. If there is a tie, the more common word wins. The best guess shows up as a suggestion you can click to search again.</p>
 
 <h2>4. Experiments</h2>
 
-<h3>4.1 Index Statistics</h3>
-<p>Table 2 summarizes the index statistics measured on the actual corpus, with the build script run on Python 3.13 against the ten Gutenberg files.</p>
+<h3>4.1 Index Numbers</h3>
+<p>Table 2 shows the index numbers from actually running the build script on Python 3.13 with the ten books.</p>
 <table>
   <thead><tr><th>Quantity</th><th>Value</th></tr></thead>
   <tbody>
     <tr><td>Documents</td><td>10</td></tr>
-    <tr><td>Total tokens</td><td>778,201</td></tr>
-    <tr><td>Unique terms (vocabulary size)</td><td>22,794</td></tr>
-    <tr><td>Unique 3-grams</td><td>5,312</td></tr>
-    <tr><td>Average document length</td><td>about 78,000 tokens</td></tr>
+    <tr><td>Total words</td><td>778,201</td></tr>
+    <tr><td>Different terms</td><td>22,794</td></tr>
+    <tr><td>Different 3-grams</td><td>5,312</td></tr>
+    <tr><td>Average book length</td><td>about 78,000 words</td></tr>
     <tr><td>index.json size</td><td>5.9 MB</td></tr>
-    <tr><td>Build wall-clock time</td><td>about 30 seconds including downloads</td></tr>
+    <tr><td>Build time</td><td>about 30 seconds including downloads</td></tr>
   </tbody>
 </table>
-<p class="caption"><b>Table 2.</b> Index statistics on the ten-book corpus.</p>
-<p>The index size is dominated by the positional postings, which take roughly two orders of magnitude more storage than the document metadata or the k-gram index. Delta encoding shaves about 40 percent off the position storage compared to absolute positions, which is what keeps the total under 6 MB.</p>
+<p class="caption"><b>Table 2.</b> Index numbers for the ten-book corpus.</p>
+<p>Most of the index size is the position data. It is far bigger than the book info or the k-gram index. The gap encoding cuts the position data by about 40 percent, and that is what keeps the whole file under 6 MB.</p>
 
-<h3>4.2 Query Latency</h3>
-<p>I measured per-query latency in Chrome on a development laptop, after the index was loaded into memory. Each query type was run on a handful of representative queries and the median wall-clock time recorded, shown in Table 3.</p>
+<h3>4.2 Search Speed</h3>
+<p>I timed the searches in Chrome on my laptop, after the index had loaded. I ran a few example searches of each type and wrote down the middle time. The results are in Table 3.</p>
 <table>
-  <thead><tr><th>Query type</th><th>Example</th><th>Median latency</th></tr></thead>
+  <thead><tr><th>Search type</th><th>Example</th><th>Time</th></tr></thead>
   <tbody>
     <tr><td>Ranked tf-idf</td><td>whale ocean voyage</td><td>about 12 ms</td></tr>
     <tr><td>Ranked BM25</td><td>whale ocean voyage</td><td>about 9 ms</td></tr>
@@ -283,13 +283,13 @@ postings     document 1342, at token positions 147, 312, 88, 203, and so on</div
     <tr><td>Spelling correction</td><td>frankinstien</td><td>about 35 ms</td></tr>
   </tbody>
 </table>
-<p class="caption"><b>Table 3.</b> Median per-query latency by mode. All measurements taken in Chrome on a development laptop.</p>
-<p>The spelling correction case is slower because it computes Damerau-Levenshtein distance against several hundred candidates that pass the k-gram filter. Everything else is essentially instantaneous from a user perspective.</p>
+<p class="caption"><b>Table 3.</b> Middle search time by type, measured in Chrome on a laptop.</p>
+<p>Spelling correction is the slow one because it has to compare the typo against a few hundred candidate words. Everything else feels instant.</p>
 
 <h3>4.3 Ranking Quality</h3>
-<p>To check ranking quality I picked a set of queries where the right answer is obvious if you know the books, and inspected the top result under each ranker, shown in Table 4.</p>
+<p>To check if the ranking was any good, I made up some searches where the right answer is obvious if you know the books, and looked at what came out on top with each ranker. Table 4 has the results.</p>
 <table>
-  <thead><tr><th>Query</th><th>tf-idf top</th><th>BM25 top</th></tr></thead>
+  <thead><tr><th>Search</th><th>tf-idf top result</th><th>BM25 top result</th></tr></thead>
   <tbody>
     <tr><td>vampire blood transylvania</td><td>Dracula</td><td>Dracula</td></tr>
     <tr><td>mr darcy</td><td>Pride and Prejudice</td><td>Pride and Prejudice</td></tr>
@@ -299,28 +299,28 @@ postings     document 1342, at token positions 147, 312, 88, 203, and so on</div
     <tr><td>martians invasion</td><td>War of the Worlds</td><td>War of the Worlds</td></tr>
   </tbody>
 </table>
-<p class="caption"><b>Table 4.</b> Sanity-check queries and top result under each ranker.</p>
-<p>Both rankers agree on every sanity-check query. BM25 spreads scores more aggressively, so the gap between the top result and the second is wider, but the ordering is identical.</p>
+<p class="caption"><b>Table 4.</b> Test searches and the top result from each ranker.</p>
+<p>Both rankers got the same top result on every test search. BM25 spreads its scores out more, so the gap between first and second place is bigger, but the order is the same.</p>
 
-<h3>4.4 Wildcard and Spelling Correction</h3>
-<p>The wildcard query monst-star expands to the term set monster, monsters, monstrous, and monstrosity, and returns three documents, Frankenstein, Dracula, and The Picture of Dorian Gray. The query star-ation expands to over 200 terms, which exposes a small limitation. Very general wildcard patterns produce too many candidates to display usefully. A real system would either truncate or fall back to ranked retrieval over the wildcard expansion.</p>
-<p>For spelling, the correction component handles common misspellings well. The word frankinstien gets corrected to frankenstein, elisabeth to elizabeth, and scroge to scrooge. The correction breaks down for misspellings more than three edits away from any vocabulary term, or for misspellings whose trigram overlap with every candidate falls below the 0.3 Jaccard threshold.</p>
+<h3>4.4 Wildcards and Spelling Correction</h3>
+<p>The wildcard search monst* matches monster, monsters, monstrous, and monstrosity, and finds three books, Frankenstein, Dracula, and The Picture of Dorian Gray. The search *ation matches over 200 words, which shows a weak spot. Very broad wildcards match too many words to show in a useful way. A better system would either cut the list off or rank the matches.</p>
+<p>Spelling correction works well on normal typos. The word frankinstien gets fixed to frankenstein, elisabeth to elizabeth, and scroge to scrooge. It stops working when the typo is more than three edits away from any real word, or when it does not share enough 3-grams with anything in the index.</p>
 
 <h3>4.5 Limitations</h3>
-<p>The system has a handful of limitations worth being honest about.</p>
+<p>There are a few things the system does not do well, and it is worth being upfront about them.</p>
 <ul>
-  <li>No stemming. The word run does not match running in ranked retrieval. Wildcards paper over this.</li>
-  <li>Unranked phrase results. Phrase queries return an unordered set of matching documents rather than a ranked list.</li>
-  <li>Index loaded eagerly. The full index is loaded into memory at startup. For corpora much larger than this, the index would need to be sharded and loaded lazily.</li>
-  <li>Spelling fires only on empty result sets. A real system would also surface did-you-mean hints for queries that return very few results but might be misspelled.</li>
-  <li>Simple snippet generation. Snippets find only the first occurrence of the query term in a document rather than the best occurrence.</li>
-  <li>No proximity or fielded queries. The system does not support proximity operators or queries scoped to just the author or just the title.</li>
+  <li>No stemming. Searching run will not match running. Wildcards are the workaround.</li>
+  <li>Phrase results are not ranked. A phrase search just gives back the matching books in no particular order.</li>
+  <li>The whole index loads at once. That is fine for ten books, but a much bigger collection would need it split up and loaded in pieces.</li>
+  <li>Spelling correction only kicks in when a search finds nothing. A better version would also suggest fixes when a search finds very few results.</li>
+  <li>The snippets are basic. They show the first place the word appears in a book, not the best place.</li>
+  <li>No proximity or field searches. You cannot search for words near each other, or search only the title or only the author.</li>
 </ul>
 
 <h2>5. Conclusion and Future Work</h2>
-<p>GutenSearch demonstrates that the textbook IR algorithms covered in CECS 429 are enough to build a working, deployable search engine end to end, with no external dependencies on either side. The whole thing is a few hundred lines of Python and a few hundred lines of JavaScript. Pushing it to GitHub Pages produces a live URL with no further configuration.</p>
-<p>The most useful next steps, in rough order of impact, would be these. First, adding Porter stemming would close the run and running gap that wildcards currently paper over. Second, query expansion through synonym lookup or pseudo relevance feedback would help recall when the user's vocabulary differs from the author's. Third, the index could be sharded by alphabet range and loaded lazily, which would let the same architecture scale to much larger corpora. Fourth, learning to rank using labeled relevance judgments on a small set of queries could improve ordering beyond what either tf-idf cosine or BM25 produces on their own. Fifth, the spelling correction component could be replaced with a proper noisy-channel model trained on actual misspellings rather than the flat edit-distance ranker.</p>
-<p>There is also a natural extension toward indexing the user's own document collection, things like research papers, course notes, or personal email, instead of a fixed corpus. The architecture supports this directly. Replace the corpus list in build_index.py with a directory walk, and everything downstream works unchanged.</p>
+<p>GutenSearch shows that the standard search engine methods from this class are enough to build a real, working search engine, start to finish, with no outside libraries. The whole thing is a few hundred lines of Python and a few hundred lines of JavaScript. Putting it online is just a matter of pushing it to GitHub Pages.</p>
+<p>If I kept working on this, here is what I would do, roughly in order of how much it would help. First, add a stemmer so run matches running without needing a wildcard. Second, add query expansion with synonyms, so a search still works when the user and the author use different words for the same thing. Third, split the index into parts and load them as needed, so it could handle a lot more books. Fourth, use real relevance ratings to train the ranking, so it could do better than tf-idf or BM25 on their own. Fifth, replace the spelling correction with a proper model trained on real typos instead of the simple version it uses now.</p>
+<p>It would also be easy to point this at your own files instead of a fixed set of books, like research papers, class notes, or email. The design already allows for it. You would just change build_index.py to read a folder instead of a list of books, and everything else would still work.</p>
 
 <h2>6. References</h2>
 <div class="refs">
