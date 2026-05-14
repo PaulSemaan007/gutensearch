@@ -4,8 +4,7 @@ A mini search engine over ten classic public domain novels from Project Gutenber
 
 ## Live demo
 
-After deploying with GitHub Pages, the site lives at
-`https://<your-github-username>.github.io/<repo-name>/`
+The site is deployed at https://paulsemaan007.github.io/gutensearch/
 
 ## Features
 
