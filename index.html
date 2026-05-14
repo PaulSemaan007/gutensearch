@@ -2,55 +2,89 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GutenSearch — Classic Literature Search Engine</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GutenSearch — Search the Classics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Crimson+Pro:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-  <h1>GutenSearch</h1>
-  <p class="tagline">A mini search engine over ten classic public-domain novels.</p>
+<header class="site-header">
+  <div class="masthead">
+    <h1 class="logo">GutenSearch</h1>
+    <p class="tagline">A small search engine across ten works of classic literature</p>
+  </div>
 </header>
 
-<section id="search-panel">
-  <form id="search-form" autocomplete="off">
-    <input id="query" type="text" placeholder='Try: whale OR raven, "Mr Darcy", monst*, dracula AND blood' aria-label="search query" autofocus>
-    <button type="submit">Search</button>
-  </form>
+<main>
 
-  <div id="controls">
-    <label>
-      Ranking:
-      <select id="ranker">
-        <option value="tfidf">tf-idf cosine</option>
-        <option value="bm25">BM25</option>
-      </select>
-    </label>
-    <label>
-      Top K:
-      <input id="topk" type="number" min="1" max="50" value="10">
-    </label>
-    <span id="hint" class="hint"></span>
-  </div>
-</section>
+  <section class="search-stage">
+    <form id="search-form" autocomplete="off">
+      <div class="search-shell">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input id="query" type="text" placeholder="Search the works of Austen, Dickens, Wells, Wilde, and more" aria-label="search query" autofocus>
+        <button type="submit">Search</button>
+      </div>
 
-<section id="status" aria-live="polite"></section>
+      <div id="hint-row">
+        <span id="hint" class="hint-pill"></span>
+      </div>
 
-<section id="results"></section>
+      <div class="suggestions">
+        <span class="suggestion-label">Try</span>
+        <button type="button" class="chip" data-q='vampire blood transylvania'>vampire blood transylvania</button>
+        <button type="button" class="chip" data-q='"mr darcy"'>“mr darcy”</button>
+        <button type="button" class="chip" data-q='monst*'>monst*</button>
+        <button type="button" class="chip" data-q='darcy AND elizabeth AND NOT bingley'>darcy AND elizabeth AND NOT bingley</button>
+        <button type="button" class="chip" data-q='frankinstien'>frankinstien</button>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <div class="advanced-row">
+          <label>
+            Ranker
+            <select id="ranker">
+              <option value="tfidf">tf-idf cosine</option>
+              <option value="bm25">BM25</option>
+            </select>
+          </label>
+          <label>
+            Top K
+            <input id="topk" type="number" min="1" max="50" value="10">
+          </label>
+        </div>
+      </details>
+    </form>
+  </section>
+
+  <section id="status" aria-live="polite"></section>
+
+  <section id="results"></section>
+
+  <section id="welcome" class="welcome">
+    <div class="welcome-card">
+      <h2>What is this</h2>
+      <p>A working mini search engine over ten public-domain novels from Project Gutenberg. Built for CECS 429 as a way to turn the classroom IR concepts into something you can actually type into.</p>
+      <p>Plain words rank by tf-idf or BM25. Wrap a phrase in <code>"quotes"</code> for exact match. Use <code>*</code> for a wildcard. Use <code>AND</code>, <code>OR</code>, <code>NOT</code> for Boolean search. Misspell a term and the system suggests a correction.</p>
+    </div>
+
+    <div class="welcome-card">
+      <h2>The corpus</h2>
+      <ul class="book-strip" id="welcome-books"></ul>
+    </div>
+  </section>
+
+</main>
 
 <footer>
-  <p>
-    Corpus from <a href="https://www.gutenberg.org/" target="_blank" rel="noopener">Project Gutenberg</a>.
-    Built for CECS 429 Search Engine Technology, CSULB Spring 2026.
-  </p>
-  <p class="syntax">
-    <b>Query syntax.</b>
-    Plain words run ranked retrieval.
-    Use <code>AND</code>, <code>OR</code>, <code>NOT</code> for Boolean.
-    Wrap phrases in double quotes for exact-phrase search.
-    Use <code>*</code> for wildcards (<code>runn*</code>, <code>*ing</code>, <code>w*ld</code>).
-  </p>
+  <p>Corpus from <a href="https://www.gutenberg.org/" target="_blank" rel="noopener">Project Gutenberg</a>. Source on <a href="https://github.com/PaulSemaan007/gutensearch" target="_blank" rel="noopener">GitHub</a>.</p>
+  <p>CECS 429 Search Engine Technology, CSULB Spring 2026.</p>
 </footer>
 
 <script src="app.js"></script>

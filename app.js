@@ -15,9 +15,17 @@ const resultsEl = () => $("results");
 
 document.addEventListener("DOMContentLoaded", main);
 
+const COVER_URL = id => `https://www.gutenberg.org/cache/epub/${id}/pg${id}.cover.medium.jpg`;
+
 async function main() {
   $("search-form").addEventListener("submit", onSearch);
-  statusEl().textContent = "Loading index...";
+  document.querySelectorAll(".chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $("query").value = btn.dataset.q;
+      $("search-form").requestSubmit();
+    });
+  });
+  statusEl().textContent = "Loading index";
   try {
     const t0 = performance.now();
     const resp = await fetch(INDEX_URL);
@@ -28,14 +36,38 @@ async function main() {
     const N = INDEX.total_docs;
     const T = Object.keys(INDEX.postings).length;
     statusEl().textContent =
-      `Index loaded. ${N} documents, ${T.toLocaleString()} unique terms ` +
-      `(${Math.round(t1 - t0)} ms).`;
+      `Ready · ${N} books · ${T.toLocaleString()} terms · ${Math.round(t1 - t0)} ms`;
+    populateWelcomeBooks();
   } catch (e) {
     statusEl().textContent =
-      "Failed to load the index. Run build_index.py first, then refresh. (" +
-      e.message + ")";
+      "Could not load the index. Run build_index.py and refresh. (" + e.message + ")";
     statusEl().classList.add("error");
   }
+}
+
+function populateWelcomeBooks() {
+  const el = document.getElementById("welcome-books");
+  if (!el || !INDEX) return;
+  const entries = Object.entries(INDEX.documents);
+  for (const [id, meta] of entries) {
+    const li = document.createElement("li");
+    const img = document.createElement("img");
+    img.src = COVER_URL(id);
+    img.alt = meta.title;
+    img.loading = "lazy";
+    img.onerror = () => {
+      img.remove();
+      li.textContent = meta.title;
+    };
+    li.appendChild(img);
+    el.appendChild(li);
+  }
+}
+
+function showWelcome(show) {
+  const w = document.getElementById("welcome");
+  if (!w) return;
+  w.classList.toggle("hide", !show);
 }
 
 // ---------- Tokenization ----------
@@ -363,14 +395,16 @@ async function onSearch(e) {
   if (!query || !INDEX) return;
   resultsEl().innerHTML = "";
   statusEl().classList.remove("error");
+  showWelcome(false);
 
   const t0 = performance.now();
   const mode = detectMode(query);
-  $("hint").textContent = "mode: " + mode;
+  $("hint").textContent = mode;
   let results = [];
   let scored = false;
   let phraseStr = "";
   let wildcardPat = "";
+  let ranker = "";
 
   try {
     if (mode === "boolean") {
@@ -394,7 +428,7 @@ async function onSearch(e) {
     } else {
       scored = true;
       const tokens = tokenize(query);
-      const ranker = $("ranker").value;
+      ranker = $("ranker").value;
       const topK = parseInt($("topk").value, 10) || 10;
       results = rankedQuery(tokens, ranker, topK);
       if (results.length === 0 && tokens.length > 0) {
@@ -414,10 +448,10 @@ async function onSearch(e) {
   }
 
   const t1 = performance.now();
+  const dt = Math.round(t1 - t0);
   statusEl().textContent =
-    `${results.length} result${results.length === 1 ? "" : "s"} ` +
-    `in ${Math.round(t1 - t0)} ms.`;
-  await renderResults(results, { mode, query, phraseStr, wildcardPat, scored });
+    `${results.length} result${results.length === 1 ? "" : "s"} · ${mode} · ${dt} ms`;
+  await renderResults(results, { mode, query, phraseStr, wildcardPat, scored, ranker });
 }
 
 // ---------- Rendering ----------
@@ -437,21 +471,45 @@ function renderSpellSuggest(orig, corr, originalQuery) {
 }
 
 async function renderResults(results, ctx) {
+  let delay = 0;
   for (const r of results) {
     const meta = INDEX.documents[r.docId];
-    const div = document.createElement("div");
-    div.className = "result";
-    let html = `<p class="title"><a href="${meta.url}" target="_blank" rel="noopener">${escapeHtml(meta.title)}</a>`;
+    const card = document.createElement("article");
+    card.className = "result";
+    card.style.animationDelay = delay + "ms";
+    delay += 40;
+
+    const coverInitial = (meta.title || "?").trim().charAt(0).toUpperCase();
+    let html = `
+      <div class="cover-wrap"><span class="cover-fallback">${escapeHtml(coverInitial)}</span></div>
+      <div class="body">
+        <h3 class="title"><a href="${meta.url}" target="_blank" rel="noopener">${escapeHtml(meta.title)}</a></h3>
+        <p class="meta">
+          <span>${escapeHtml(meta.author)}</span>
+          <span aria-hidden="true">·</span>
+          <span>${meta.length.toLocaleString()} tokens</span>`;
     if (ctx.scored && r.score != null) {
-      html += `<span class="score">score ${r.score.toFixed(4)}</span>`;
+      html += `<span class="score">${ctx.ranker || "score"} ${r.score.toFixed(4)}</span>`;
     }
-    html += `</p><p class="meta">${escapeHtml(meta.author)} · ${meta.length.toLocaleString()} tokens</p>`;
-    html += `<p class="snippet">loading snippet...</p>`;
-    div.innerHTML = html;
-    resultsEl().appendChild(div);
-    const snipEl = div.querySelector(".snippet");
+    html += `</p>
+        <p class="snippet">…</p>
+      </div>`;
+    card.innerHTML = html;
+
+    const wrap = card.querySelector(".cover-wrap");
+    const fallback = wrap.querySelector(".cover-fallback");
+    const img = document.createElement("img");
+    img.src = COVER_URL(r.docId);
+    img.alt = meta.title;
+    img.loading = "lazy";
+    img.onload = () => { if (fallback) fallback.remove(); };
+    img.onerror = () => { img.remove(); };
+    wrap.appendChild(img);
+
+    resultsEl().appendChild(card);
+    const snipEl = card.querySelector(".snippet");
     generateSnippet(r.docId, ctx)
-      .then(s => { snipEl.innerHTML = s || "(no snippet available)"; })
+      .then(s => { snipEl.innerHTML = s || "<span style='opacity:0.5'>(no snippet available)</span>"; })
       .catch(() => { snipEl.textContent = "(snippet unavailable offline)"; });
   }
 }
