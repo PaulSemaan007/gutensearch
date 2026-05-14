@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GutenSearch — Classic Literature Search Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>GutenSearch</h1>
+  <p class="tagline">A mini search engine over ten classic public-domain novels.</p>
+</header>
+
+<section id="search-panel">
+  <form id="search-form" autocomplete="off">
+    <input id="query" type="text" placeholder='Try: whale OR raven, "Mr Darcy", monst*, dracula AND blood' aria-label="search query" autofocus>
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="controls">
+    <label>
+      Ranking:
+      <select id="ranker">
+        <option value="tfidf">tf-idf cosine</option>
+        <option value="bm25">BM25</option>
+      </select>
+    </label>
+    <label>
+      Top K:
+      <input id="topk" type="number" min="1" max="50" value="10">
+    </label>
+    <span id="hint" class="hint"></span>
+  </div>
+</section>
+
+<section id="status" aria-live="polite"></section>
+
+<section id="results"></section>
+
+<footer>
+  <p>
+    Corpus from <a href="https://www.gutenberg.org/" target="_blank" rel="noopener">Project Gutenberg</a>.
+    Built for CECS 429 Search Engine Technology, CSULB Spring 2026.
+  </p>
+  <p class="syntax">
+    <b>Query syntax.</b>
+    Plain words run ranked retrieval.
+    Use <code>AND</code>, <code>OR</code>, <code>NOT</code> for Boolean.
+    Wrap phrases in double quotes for exact-phrase search.
+    Use <code>*</code> for wildcards (<code>runn*</code>, <code>*ing</code>, <code>w*ld</code>).
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

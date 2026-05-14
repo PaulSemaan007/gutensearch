@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GutenSearch, Presentation Reading Script</title>
+<style>
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 13pt;
+    line-height: 1.7;
+    max-width: 7in;
+    margin: 0.8in auto;
+    color: black;
+    background: white;
+  }
+  .header p { margin: 0; }
+  h1 {
+    font-size: 16pt;
+    font-weight: bold;
+    text-align: center;
+    margin: 1em 0 1.4em 0;
+  }
+  h2 {
+    font-size: 13pt;
+    font-weight: bold;
+    margin: 1.6em 0 0.4em 0;
+    border-bottom: 1px solid #999;
+    padding-bottom: 2pt;
+  }
+  .slidelabel {
+    font-size: 11pt;
+    color: #666;
+    font-weight: normal;
+    margin-left: 0.6em;
+  }
+  p { margin: 0 0 0.7em 0; }
+  .cue { font-style: italic; color: #444; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <p>Paul Semaan</p>
+  <p>CECS 429</p>
+  <p>Professor Qin</p>
+  <p>May 16, 2026</p>
+</div>
+
+<h1>GutenSearch Presentation Script</h1>
+
+<p class="cue">Use arrow keys or Page Down to advance slides. Estimated total time, around eight to nine minutes. Demo at the end runs in any browser at the deployed URL.</p>
+
+<h2>Slide 1 <span class="slidelabel">Title</span></h2>
+<p>Hi everyone, my name is Paul Semaan and this is my final project for CECS 429. The project is called GutenSearch. It is a working mini search engine over a small corpus of classic literature, and I built it to demonstrate the IR techniques we covered in class as one complete pipeline.</p>
+
+<h2>Slide 2 <span class="slidelabel">Motivation</span></h2>
+<p>The reason I picked this project is honestly that everything we covered this semester tends to live as a separate formula on a separate slide. Tokenization. Inverted indexes. tf-idf. BM25. K-grams. Spelling correction. You learn each of these in isolation, but you only really see how they connect when you put them in the same system. I wanted a working artifact I could actually type queries into, see results from, and reason about, not a pile of disconnected algorithms.</p>
+
+<h2>Slide 3 <span class="slidelabel">Problem Statement</span></h2>
+<p>The goal was to build a complete mini search engine, end to end. It needed to index a real natural language corpus, support all four query types from class, which are Boolean, phrase, wildcard, and ranked, offer two different ranking algorithms for comparison, do spelling correction on misspelled queries, and ship as a deployable static website with no backend, no database, and no server.</p>
+
+<h2>Slide 4 <span class="slidelabel">Dataset</span></h2>
+<p>For the corpus I picked ten public domain novels from Project Gutenberg, around 760,000 tokens total. They span genres and eras, from gothic horror to detective fiction to social satire to science fiction to children's literature. I picked these because they are linguistically rich, freely redistributable, and familiar enough that you can sanity check the search results just by thinking about the books. The build script downloads them directly from gutenberg.org and caches them locally, so the corpus is fully reproducible.</p>
+
+<h2>Slide 5 <span class="slidelabel">Architecture</span></h2>
+<p>The system is split into two halves. The offline half is a single Python script that tokenizes the corpus, builds the inverted index and the k-gram index, computes all the document statistics, and writes everything out as JSON. The online half is a static web page that loads that JSON and runs every search query directly in the browser. There is no backend. This means the whole system deploys to GitHub Pages with one click, which also gets me the bonus five points for a live demo URL.</p>
+
+<h2>Slide 6 <span class="slidelabel">Indexing</span></h2>
+<p>Tokenization is intentionally simple. Lowercase, alphabetic characters only, no stemming, and stopwords stay in the index. The reason stopwords stay is that phrase queries depend on every original position being present. The inverted index is positional, so for each unique term I keep a list of which documents it appears in and at which token offsets. Positions are delta encoded to shrink the JSON by about 40 percent. The k-gram index is built over 3-grams of every vocabulary term, with sentinel characters at the start and end of each term to make prefix and suffix wildcards work properly.</p>
+
+<h2>Slide 7 <span class="slidelabel">Query Evaluation</span></h2>
+<p>The system supports four query types and auto detects which one to use from the query string. Boolean queries use a small shunting yard parser that converts to reverse Polish notation, then I evaluate by walking the RPN expression and doing set intersect, union, or difference. Phrase queries intersect the document sets of every term and then for each candidate document walk the position list of the first term and check if each subsequent term appears at the next consecutive offset. Wildcard queries intersect the k-gram lists of the definite trigrams and then filter the results with a regex to drop false positives. Ranked queries use either tf-idf cosine or BM25, returning the top K with scores. And spelling correction is Damerau-Levenshtein over candidates that pass a 3-gram Jaccard similarity threshold of 0.3.</p>
+
+<h2>Slide 8 <span class="slidelabel">Ranking</span></h2>
+<p>Here are the two ranking modes. The first is tf-idf cosine using the lnc dot ltc scheme from the Manning textbook. For each query term it multiplies a log scaled query term frequency by an idf weight, multiplies a log scaled document term frequency, and divides by the L2 norm of the query and the document vectors, which gives you cosine similarity. The second is BM25 with k1 equal to 1.5 and b equal to 0.75. BM25 differs from tf-idf cosine mainly in that it saturates term frequency through the k1 parameter and accounts for document length explicitly. Both rankers are exposed in the UI as a dropdown, so you can switch between them at query time.</p>
+
+<h2>Slide 9 <span class="slidelabel">Results, Index</span></h2>
+<p>Here are the index statistics on the actual corpus. Ten documents, around 760,000 tokens, about 33,000 unique terms, about 14,000 unique 3-grams. The complete JSON index is about 30 megabytes, dominated by the positional postings, and it loads into the browser in well under a second on a typical laptop. The corpus raw text takes another 4.5 megabytes which the frontend fetches lazily for snippet generation.</p>
+
+<h2>Slide 10 <span class="slidelabel">Results, Latency</span></h2>
+<p>These are the per-query latency numbers I measured in Chrome on a development laptop. Boolean queries are the fastest, around 3 milliseconds, because they are just set operations on small posting lists. Wildcards are also fast, about 4 milliseconds, since k-gram filtering is very effective. Phrase and ranked queries are in the high single digits to low double digits. The slowest is spelling correction at around 35 milliseconds, which makes sense because it computes edit distance against several hundred candidates after k-gram filtering. Everything else is essentially instantaneous from the user point of view.</p>
+
+<h2>Slide 11 <span class="slidelabel">Results, Ranking Sanity</span></h2>
+<p>To sanity check the ranking quality I ran some queries where the right answer is obvious. Vampire blood transylvania returns Dracula at the top. Mr Darcy returns Pride and Prejudice. Scrooge Christmas returns A Christmas Carol. Rabbit hole returns Alice in Wonderland. Holmes Baker Street returns Sherlock Holmes. Martians invasion returns War of the Worlds. Both tf-idf cosine and BM25 agree on every sanity check query. BM25 tends to spread scores more aggressively, so the gap between the top result and the second one is larger under BM25, but the ordering is the same.</p>
+
+<h2>Slide 12 <span class="slidelabel">Conclusion and Future Work</span></h2>
+<p>What worked is the main point of the project. Every IR concept from the course is implemented in one working, deployable system. The whole thing is a few hundred lines of Python plus a few hundred lines of JavaScript. As for future work, the most useful next steps would be Porter stemming to handle morphological variation, query expansion through synonyms or pseudo relevance feedback for better recall, a sharded index to scale beyond ten documents, learning to rank using labeled relevance judgments, and a real noisy channel spelling model trained on actual misspellings rather than the flat edit distance ranker I have now.</p>
+
+<h2>Slide 13 <span class="slidelabel">Target Venue</span></h2>
+<p>Target venue for this project is the SIGIR Demonstrations Track. SIGIR is the top venue for information retrieval research, with the highest h5 index under IR in Google Scholar Metrics in 2024. They have a dedicated Demonstrations track for working systems, which is exactly what GutenSearch is. The system implements the classical IR techniques that SIGIR has been publishing on for decades, and the static deploy makes the demo trivial for reviewers and attendees to use in the browser. I think the system is a natural fit for that venue.</p>
+
+<h2>Slide 14 <span class="slidelabel">Thank You</span></h2>
+<p>That is the project. I am going to switch over to the live demo and run a few queries, and then I am happy to take any questions.</p>
+
+</body>
+</html>

@@ -1,0 +1,2 @@
+# GutenSearch uses Python standard library only.
+# Tested on Python 3.8 through 3.12.

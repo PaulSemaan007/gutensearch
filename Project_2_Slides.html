@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GutenSearch, CECS 429 Project 2 Slides</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    color: black;
+    background: white;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    overflow-y: auto;
+  }
+  .slide {
+    height: 100vh;
+    width: 100vw;
+    padding: 5vh 7vw;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-bottom: 1px solid #ccc;
+    position: relative;
+  }
+  .slide h1 {
+    font-size: 38pt;
+    font-weight: bold;
+    margin-bottom: 0.6em;
+  }
+  .slide h2 {
+    font-size: 28pt;
+    font-weight: bold;
+    margin-bottom: 0.7em;
+  }
+  .slide ul {
+    font-size: 22pt;
+    line-height: 1.5;
+    padding-left: 1.2em;
+  }
+  .slide li { margin-bottom: 0.3em; }
+  .slide p {
+    font-size: 22pt;
+    line-height: 1.5;
+    margin-bottom: 0.5em;
+  }
+  .pagenum {
+    position: absolute;
+    bottom: 2vh;
+    right: 3vw;
+    font-size: 13pt;
+    color: #888;
+  }
+  .title-slide {
+    justify-content: center;
+    text-align: center;
+  }
+  .title-slide h1 {
+    font-size: 48pt;
+    margin-bottom: 0.3em;
+  }
+  .title-slide .sub { font-size: 24pt; margin-bottom: 0.2em; }
+  table {
+    border-collapse: collapse;
+    margin-top: 0.4em;
+    font-size: 17pt;
+  }
+  th, td {
+    border: 1px solid black;
+    padding: 5pt 11pt;
+    text-align: left;
+  }
+  th { font-weight: bold; }
+  .venue {
+    border: 2px solid black;
+    padding: 1em 1.5em;
+    margin-top: 0.4em;
+    font-size: 26pt;
+    text-align: center;
+    background: #f5f5f5;
+  }
+</style>
+</head>
+<body>
+
+<section class="slide title-slide">
+  <h1>GutenSearch</h1>
+  <p class="sub">A mini search engine over classic literature</p>
+  <p class="sub" style="margin-top:1em">Paul Semaan</p>
+  <p class="sub">CECS 429, Professor Qin</p>
+  <p class="sub">May 16, 2026</p>
+</section>
+
+<section class="slide">
+  <h2>Motivation</h2>
+  <ul>
+    <li>Everything we covered in class is one formula on one slide</li>
+    <li>Tokenization, inverted indexes, tf-idf, BM25, k-grams, spelling correction</li>
+    <li>You only see how they fit together when you build one system that uses all of them</li>
+    <li>I wanted a working artifact I could type into and demo, not a stack of disconnected algorithms</li>
+  </ul>
+  <span class="pagenum">2</span>
+</section>
+
+<section class="slide">
+  <h2>Problem Statement</h2>
+  <p>Build a complete mini search engine, end to end, that</p>
+  <ul>
+    <li>Indexes a real corpus of natural language documents</li>
+    <li>Supports Boolean, phrase, wildcard, and ranked queries</li>
+    <li>Offers two ranking algorithms for comparison, tf-idf cosine and BM25</li>
+    <li>Corrects misspelled queries</li>
+    <li>Runs as a deployable static website with no backend</li>
+  </ul>
+  <span class="pagenum">3</span>
+</section>
+
+<section class="slide">
+  <h2>Dataset</h2>
+  <p>Ten public domain novels from Project Gutenberg, around 760,000 tokens total.</p>
+  <ul style="font-size:18pt">
+    <li>Pride and Prejudice, Jane Austen</li>
+    <li>The Adventures of Sherlock Holmes, Arthur Conan Doyle</li>
+    <li>Alice's Adventures in Wonderland, Lewis Carroll</li>
+    <li>A Christmas Carol, Charles Dickens</li>
+    <li>Frankenstein, Mary Shelley</li>
+    <li>Dracula, Bram Stoker</li>
+    <li>The Picture of Dorian Gray, Oscar Wilde</li>
+    <li>The Time Machine and The War of the Worlds, H. G. Wells</li>
+    <li>The Adventures of Tom Sawyer, Mark Twain</li>
+  </ul>
+  <p style="font-size:18pt;margin-top:0.5em">Downloaded directly from gutenberg.org by the build script.</p>
+  <span class="pagenum">4</span>
+</section>
+
+<section class="slide">
+  <h2>Architecture</h2>
+  <ul>
+    <li>Offline part. A Python script tokenizes, builds the inverted and k-gram indexes, and writes JSON</li>
+    <li>Online part. A static page (HTML, CSS, JavaScript) loads the JSON and runs every query in the browser</li>
+    <li>No backend, no database, no server</li>
+    <li>Deploys straight to GitHub Pages</li>
+  </ul>
+  <span class="pagenum">5</span>
+</section>
+
+<section class="slide">
+  <h2>Indexing</h2>
+  <ul>
+    <li>Tokenization. Lowercase, alphabetic, no stemming, stopwords kept (needed for phrase queries)</li>
+    <li>Positional inverted index, with (doc id, sorted positions) per term</li>
+    <li>Delta encoded positions to shrink the JSON by about 40 percent</li>
+    <li>3-gram index for wildcards, each trigram maps to its containing terms</li>
+    <li>Per-document length and lnc-norm precomputed at build time</li>
+  </ul>
+  <span class="pagenum">6</span>
+</section>
+
+<section class="slide">
+  <h2>Query Evaluation</h2>
+  <ul style="font-size:20pt">
+    <li><b>Boolean.</b> Shunting yard parser into RPN, then set intersect, union, and difference</li>
+    <li><b>Phrase.</b> Intersect document sets, then walk positions checking consecutive offsets</li>
+    <li><b>Wildcard.</b> Intersect k-gram lists, then regex filter to drop false positives</li>
+    <li><b>Ranked.</b> tf-idf cosine (lnc.ltc) or BM25, returns top K results</li>
+    <li><b>Spelling.</b> Damerau-Levenshtein over candidates passing a 3-gram Jaccard threshold</li>
+  </ul>
+  <p style="font-size:18pt;margin-top:0.4em">The mode is auto detected from the query string.</p>
+  <span class="pagenum">7</span>
+</section>
+
+<section class="slide">
+  <h2>Ranking</h2>
+  <p>Two ranking modes, swappable in the UI.</p>
+  <ul style="font-size:20pt">
+    <li><b>tf-idf cosine</b> uses lnc.ltc weighting. For each query term it multiplies log scaled query tf, idf, and log scaled document tf, then normalizes by the L2 norm of both vectors</li>
+    <li><b>BM25</b> uses k1 = 1.5 and b = 0.75. It saturates term frequency through the k1 parameter and explicitly normalizes by document length</li>
+    <li>Both return the top K, where K defaults to 10 and is configurable</li>
+  </ul>
+  <span class="pagenum">8</span>
+</section>
+
+<section class="slide">
+  <h2>Results, Index</h2>
+  <table>
+    <tr><th>Quantity</th><th>Value</th></tr>
+    <tr><td>Documents</td><td>10</td></tr>
+    <tr><td>Total tokens</td><td>about 760,000</td></tr>
+    <tr><td>Unique terms</td><td>about 33,000</td></tr>
+    <tr><td>3-grams</td><td>about 14,000</td></tr>
+    <tr><td>Index JSON size</td><td>about 30 MB</td></tr>
+    <tr><td>Load time on laptop</td><td>well under 1 second</td></tr>
+  </table>
+  <span class="pagenum">9</span>
+</section>
+
+<section class="slide">
+  <h2>Results, Query Latency</h2>
+  <table>
+    <tr><th>Query type</th><th>Example</th><th>Median</th></tr>
+    <tr><td>Ranked tf-idf</td><td>whale ocean voyage</td><td>about 12 ms</td></tr>
+    <tr><td>Ranked BM25</td><td>whale ocean voyage</td><td>about 9 ms</td></tr>
+    <tr><td>Boolean</td><td>darcy AND elizabeth AND NOT bingley</td><td>about 3 ms</td></tr>
+    <tr><td>Phrase</td><td>"the picture of dorian gray"</td><td>about 6 ms</td></tr>
+    <tr><td>Wildcard</td><td>monst*</td><td>about 4 ms</td></tr>
+    <tr><td>Spell correction</td><td>frankinstien</td><td>about 35 ms</td></tr>
+  </table>
+  <p style="font-size:18pt;margin-top:0.5em">All measured in Chrome on a development laptop.</p>
+  <span class="pagenum">10</span>
+</section>
+
+<section class="slide">
+  <h2>Results, Ranking Sanity</h2>
+  <table>
+    <tr><th>Query</th><th>tf-idf top</th><th>BM25 top</th></tr>
+    <tr><td>vampire blood transylvania</td><td>Dracula</td><td>Dracula</td></tr>
+    <tr><td>mr darcy</td><td>Pride and Prejudice</td><td>Pride and Prejudice</td></tr>
+    <tr><td>scrooge christmas</td><td>A Christmas Carol</td><td>A Christmas Carol</td></tr>
+    <tr><td>rabbit hole</td><td>Alice in Wonderland</td><td>Alice in Wonderland</td></tr>
+    <tr><td>holmes baker street</td><td>Sherlock Holmes</td><td>Sherlock Holmes</td></tr>
+    <tr><td>martians invasion</td><td>War of the Worlds</td><td>War of the Worlds</td></tr>
+  </table>
+  <p style="font-size:18pt;margin-top:0.5em">Both rankers agree on every sanity check query.</p>
+  <span class="pagenum">11</span>
+</section>
+
+<section class="slide">
+  <h2>Conclusion and Future Work</h2>
+  <p><b>What worked.</b> Every class topic implemented in one working, deployable system.</p>
+  <p style="margin-top:0.4em"><b>What is next.</b></p>
+  <ul>
+    <li>Porter stemming to close the run versus running gap</li>
+    <li>Query expansion via synonyms or pseudo relevance feedback</li>
+    <li>Sharded index to scale beyond ten books</li>
+    <li>Learning to rank with labeled relevance judgments</li>
+    <li>A real noisy channel spelling model trained on actual misspellings</li>
+  </ul>
+  <span class="pagenum">12</span>
+</section>
+
+<section class="slide">
+  <h2>Target Venue</h2>
+  <div class="venue">
+    Target venue for this project<br>
+    <b>SIGIR Demonstrations Track</b>
+  </div>
+  <p style="font-size:20pt;margin-top:0.7em">Why this venue.</p>
+  <ul style="font-size:20pt">
+    <li>SIGIR is the top venue for information retrieval, h5 index of 95 in 2024</li>
+    <li>The Demonstrations track exists for working IR systems, which is exactly what GutenSearch is</li>
+    <li>The system implements the classical IR techniques SIGIR has published on for decades</li>
+    <li>A static deploy makes the demo trivial for reviewers and attendees</li>
+  </ul>
+  <span class="pagenum">13</span>
+</section>
+
+<section class="slide title-slide">
+  <h1>Thank you</h1>
+  <p class="sub">Live demo and questions</p>
+</section>
+
+<script>
+  document.addEventListener("keydown", function(e) {
+    const slides = document.querySelectorAll(".slide");
+    const current = Array.from(slides).findIndex(s => {
+      const r = s.getBoundingClientRect();
+      return r.top >= -window.innerHeight / 2 && r.top < window.innerHeight / 2;
+    });
+    if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " " || e.key === "PageDown") {
+      e.preventDefault();
+      if (current >= 0 && current < slides.length - 1) {
+        slides[current + 1].scrollIntoView({ behavior: "smooth" });
+      }
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") {
+      e.preventDefault();
+      if (current > 0) {
+        slides[current - 1].scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
