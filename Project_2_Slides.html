@@ -2,207 +2,217 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GutenSearch, CECS 429 Project 2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Crimson+Pro:ital,wght@0,400;0,500;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;0,900;1,400&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --paper: #fbf8f1;
-    --paper-warm: #f3eee0;
-    --ink: #1f1a14;
+    --paper-warm: #f1ead9;
+    --ink: #1a1611;
+    --ink-2: #2c2419;
     --ink-soft: #4a3f30;
     --ink-faded: #8a7d68;
     --rule: #d9d0bd;
-    --accent: #6b3a2a;
-    --accent-soft: #a16448;
-    --highlight: #efce6a;
-    --highlight-bg: #fff1c0;
-    --font-display: "Playfair Display", "Hoefler Text", Georgia, serif;
-    --font-body: "Crimson Pro", "Iowan Old Style", Georgia, serif;
-    --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+    --accent: #7a3b22;
+    --accent-bright: #b5642f;
+    --gold: #e3b341;
+    --cream: #f5ecd5;
+    --font-display: "Playfair Display", Georgia, serif;
+    --font-body: "Crimson Pro", Georgia, serif;
+    --font-mono: "JetBrains Mono", Consolas, monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
+    width: 100%;
     height: 100%;
-    background: var(--paper);
-    color: var(--ink);
+    overflow: hidden;
+    background: #100d09;
     font-family: var(--font-body);
-    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
-    overflow-y: auto;
+    text-rendering: optimizeLegibility;
   }
+
+  .deck { position: fixed; inset: 0; overflow: hidden; }
 
   .slide {
-    height: 100vh;
-    width: 100vw;
-    padding: 7vh 8vw 5vh 8vw;
-    scroll-snap-align: start;
+    position: absolute;
+    inset: 0;
+    padding: 8vh 9vw;
     display: flex;
     flex-direction: column;
-    border-bottom: 1px solid var(--rule);
-    position: relative;
+    justify-content: center;
     background: var(--paper);
+    color: var(--ink);
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.04);
+    transition: opacity 0.55s cubic-bezier(.22,.61,.36,1),
+                transform 0.55s cubic-bezier(.22,.61,.36,1),
+                visibility 0s linear 0.55s;
   }
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition: opacity 0.55s cubic-bezier(.22,.61,.36,1),
+                transform 0.55s cubic-bezier(.22,.61,.36,1),
+                visibility 0s;
+    z-index: 2;
+  }
+  .slide.dark {
+    background: radial-gradient(ellipse at 30% 20%, #2a2016 0%, #161109 70%);
+    color: var(--cream);
+  }
+  .slide.warm { background: linear-gradient(150deg, var(--paper) 0%, var(--paper-warm) 100%); }
 
-  .slide.warm { background: linear-gradient(135deg, var(--paper) 0%, var(--paper-warm) 100%); }
+  .fragment {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(.22,.61,.36,1);
+  }
+  .slide.active .fragment.shown { opacity: 1; transform: translateY(0); }
 
   .eyebrow {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.18em;
+    font-size: clamp(0.7rem, 1vw, 0.92rem);
+    letter-spacing: 0.32em;
     text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 0.6rem;
+    color: var(--accent-bright);
+    margin-bottom: 1.4rem;
   }
+  .slide.dark .eyebrow { color: var(--gold); }
 
-  .slide h1 {
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2.6rem, 6.5vw, 6rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+  }
+  h2 {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: clamp(2.5rem, 6vw, 4.4rem);
-    line-height: 1.05;
+    font-size: clamp(2rem, 4.6vw, 4rem);
+    line-height: 1.06;
     letter-spacing: -0.02em;
-    color: var(--ink);
-    margin-bottom: 0.6rem;
+    margin-bottom: 1.6rem;
   }
+  h2 em { font-style: italic; color: var(--accent); font-weight: 600; }
+  .slide.dark h2 em { color: var(--gold); }
 
-  .slide h2 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(1.8rem, 4vw, 2.8rem);
-    line-height: 1.1;
-    letter-spacing: -0.015em;
-    color: var(--ink);
-    margin-bottom: 1.2rem;
-  }
-
-  .slide p, .slide li {
-    font-family: var(--font-body);
-    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+  p, li {
+    font-size: clamp(1.05rem, 1.7vw, 1.6rem);
     line-height: 1.5;
     color: var(--ink-soft);
   }
+  .slide.dark p, .slide.dark li { color: #d8ccae; }
+  .lead { font-size: clamp(1.2rem, 2.1vw, 2rem); color: var(--ink-2); }
+  .slide.dark .lead { color: var(--cream); }
 
-  .slide ul { list-style: none; padding: 0; }
-  .slide ul li { padding-left: 1.4rem; position: relative; margin-bottom: 0.5rem; }
-  .slide ul li::before {
+  ul { list-style: none; }
+  ul li { position: relative; padding-left: 2rem; margin-bottom: 0.9rem; }
+  ul li::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 0.75em;
-    width: 0.7rem;
-    height: 1px;
-    background: var(--accent);
+    top: 0.78em;
+    width: 1.1rem;
+    height: 2px;
+    background: var(--accent-bright);
   }
+  .slide.dark ul li::before { background: var(--gold); }
 
-  .pagenum {
-    position: absolute;
-    bottom: 2.5vh;
-    left: 8vw;
+  .cover { justify-content: center; align-items: flex-start; }
+  .cover .kicker {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    color: var(--ink-faded);
-  }
-
-  .footer-mark {
-    position: absolute;
-    bottom: 2.5vh;
-    right: 8vw;
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: 0.9rem;
-    color: var(--ink-faded);
-  }
-
-  /* Title slide */
-  .title-slide {
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    background: var(--paper-warm);
-  }
-  .title-slide h1 {
-    font-size: clamp(3.5rem, 9vw, 6.5rem);
-    margin-bottom: 0.4rem;
-  }
-  .title-slide .sub {
-    font-family: var(--font-body);
-    font-style: italic;
-    font-size: clamp(1.2rem, 2vw, 1.7rem);
-    color: var(--ink-soft);
-    margin-bottom: 0.3rem;
-  }
-  .title-slide .author {
-    margin-top: 2rem;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
+    font-size: clamp(0.75rem, 1.1vw, 1rem);
+    letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--ink);
+    color: var(--gold);
+    margin-bottom: 1.6rem;
   }
-
-  /* Tables */
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 0.4em 0;
-    font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  .cover h1 { font-size: clamp(3.4rem, 11vw, 9rem); }
+  .cover .tagline {
     font-family: var(--font-body);
+    font-style: italic;
+    font-size: clamp(1.3rem, 2.6vw, 2.4rem);
+    color: #cdbf9d;
+    margin-top: 0.8rem;
+    max-width: 22ch;
   }
-  th {
-    text-align: left;
-    padding: 0.55rem 0.8rem;
-    border-bottom: 2px solid var(--ink);
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.95em;
-    color: var(--ink);
-  }
-  td {
-    padding: 0.5rem 0.8rem;
-    border-bottom: 1px solid var(--rule);
-    color: var(--ink-soft);
-  }
-  tr:last-child td { border-bottom: none; }
-  td.num { font-family: var(--font-mono); font-size: 0.95em; color: var(--ink); }
-
-  /* Code blocks */
-  pre {
+  .cover .credit {
+    margin-top: 3.2rem;
     font-family: var(--font-mono);
-    font-size: clamp(0.85rem, 1.2vw, 1.05rem);
-    background: var(--ink);
-    color: #f5ecd5;
-    padding: 1.1rem 1.3rem;
-    border-radius: 4px;
-    overflow-x: auto;
-    line-height: 1.45;
+    font-size: clamp(0.78rem, 1vw, 1rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #8a7d68;
   }
-  pre .k { color: #c89464; }
-  pre .v { color: #efce6a; }
-  pre .c { color: #6b7d6e; font-style: italic; }
+  .cover-shelf {
+    position: absolute;
+    right: -2vw;
+    bottom: -5vh;
+    display: flex;
+    gap: 0.6rem;
+    transform: rotate(-8deg);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .cover-shelf img {
+    width: 11vw;
+    min-width: 90px;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    box-shadow: 0 20px 50px -10px rgba(0,0,0,0.7);
+    border-radius: 2px;
+  }
 
-  /* Dataset slide book grid */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.4rem 3rem;
+    margin-top: 0.6rem;
+  }
+  .stat .figure {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.6rem, 5.5vw, 4.8rem);
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .slide.dark .stat .figure { color: var(--gold); }
+  .stat .caption {
+    font-family: var(--font-mono);
+    font-size: clamp(0.7rem, 1vw, 0.95rem);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    margin-top: 0.6rem;
+  }
+
   .book-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 0.8rem;
-    margin-top: 0.6rem;
+    gap: 1rem;
+    margin-top: 0.4rem;
   }
   .book-grid figure {
-    aspect-ratio: 2 / 3;
-    background: var(--paper-warm);
-    border: 1px solid var(--rule);
-    overflow: hidden;
+    aspect-ratio: 2/3;
     position: relative;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--paper-warm);
+    box-shadow: 0 14px 30px -12px rgba(26,22,17,0.45);
     display: flex;
-    align-items: end;
+    align-items: flex-end;
   }
-  .book-grid figure img {
+  .book-grid img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -213,386 +223,496 @@
     position: relative;
     z-index: 1;
     width: 100%;
-    background: linear-gradient(to top, rgba(31,26,20,0.85) 0%, rgba(31,26,20,0) 100%);
-    color: #f5ecd5;
-    padding: 1.4rem 0.5rem 0.4rem 0.5rem;
+    padding: 1.6rem 0.5rem 0.5rem;
+    background: linear-gradient(to top, rgba(20,15,9,0.9), transparent);
+    color: var(--cream);
     font-family: var(--font-display);
-    font-size: 0.7rem;
-    line-height: 1.15;
+    font-size: clamp(0.6rem, 0.85vw, 0.82rem);
     text-align: center;
+    line-height: 1.15;
   }
 
-  /* Architecture diagram */
   .pipeline {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.8rem;
-    margin: 1rem 0;
-    font-family: var(--font-mono);
-    font-size: clamp(0.8rem, 1.2vw, 1rem);
+    align-items: stretch;
+    gap: 1rem;
+    margin-top: 1rem;
   }
-  .pipeline .box {
+  .pipeline .stage {
     flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(227,179,65,0.3);
+    border-top: 5px solid var(--gold);
+    border-radius: 6px;
+    padding: 1.4rem 1rem;
     text-align: center;
-    background: white;
-    border: 1px solid var(--rule);
-    border-top: 4px solid var(--accent);
-    padding: 1rem 0.6rem;
-    border-radius: 4px;
   }
-  .pipeline .box b {
+  .pipeline .stage b {
     display: block;
     font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 1.15em;
-    color: var(--ink);
-    margin-bottom: 0.3rem;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    font-size: clamp(1rem, 1.6vw, 1.5rem);
+    color: var(--cream);
+    margin-bottom: 0.4rem;
   }
-  .pipeline .arrow {
-    color: var(--accent);
-    font-size: 1.4em;
-    flex: 0 0 auto;
+  .pipeline .stage span {
+    font-family: var(--font-mono);
+    font-size: clamp(0.62rem, 0.95vw, 0.85rem);
+    color: var(--ink-faded);
+    line-height: 1.4;
+  }
+  .pipeline .join {
+    align-self: center;
+    font-size: 1.8rem;
+    color: var(--accent-bright);
   }
 
-  /* Venue slide */
-  .venue-banner {
-    margin: 1.4rem 0;
-    padding: 2.2rem 2rem;
-    background: var(--ink);
-    color: var(--paper);
-    border-radius: 4px;
-    text-align: center;
-    box-shadow: 0 20px 50px -20px rgba(31, 26, 20, 0.5);
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.4rem;
+    font-size: clamp(0.85rem, 1.35vw, 1.3rem);
   }
-  .venue-banner .small {
+  thead th {
+    text-align: left;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    letter-spacing: 0.2em;
+    font-size: 0.7em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--highlight);
-    margin-bottom: 0.6rem;
+    color: var(--accent);
+    padding: 0 0.9rem 0.5rem;
+    border-bottom: 2px solid var(--ink);
   }
-  .venue-banner .big {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: clamp(2.2rem, 4.5vw, 3.2rem);
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-  }
-  .venue-banner .url {
-    font-family: var(--font-mono);
-    font-size: 1rem;
-    color: var(--paper-warm);
-    margin-top: 0.8rem;
-    opacity: 0.85;
-  }
-
-  /* Formula display */
-  .formula {
-    font-family: var(--font-mono);
-    font-size: clamp(0.85rem, 1.3vw, 1.05rem);
-    background: var(--paper-warm);
-    border-left: 3px solid var(--accent);
-    padding: 1rem 1.2rem;
-    border-radius: 0 4px 4px 0;
-    line-height: 1.6;
-    color: var(--ink);
-    margin: 0.6rem 0;
-    overflow-x: auto;
-  }
-  .formula .label {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: 0.95em;
+  .slide.dark thead th { color: var(--gold); border-bottom-color: var(--cream); }
+  tbody td {
+    padding: 0.62rem 0.9rem;
+    border-bottom: 1px solid var(--rule);
     color: var(--ink-soft);
-    margin-bottom: 0.3rem;
   }
+  .slide.dark tbody td { color: #d8ccae; border-bottom-color: rgba(217,208,189,0.18); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono { font-family: var(--font-mono); font-size: 0.9em; color: var(--ink); }
+  .slide.dark td.mono { color: var(--cream); }
+  td.win { color: var(--accent); font-weight: 600; }
+  .slide.dark td.win { color: var(--gold); }
 
-  /* Two column layout */
-  .two-col {
+  .cols {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-top: 0.6rem;
+    gap: 2.6rem;
+    margin-top: 0.4rem;
   }
+  .col-head {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(1.1rem, 1.8vw, 1.7rem);
+    color: var(--accent);
+    margin-bottom: 0.7rem;
+  }
+  .slide.dark .col-head { color: var(--gold); }
 
-  /* Demo CTA */
-  .demo-cta {
-    margin-top: 1rem;
-    font-family: var(--font-body);
+  .code-card {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 8px;
+    padding: 1.6rem 1.8rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.8rem, 1.25vw, 1.15rem);
+    line-height: 1.7;
+    box-shadow: 0 30px 60px -25px rgba(0,0,0,0.6);
+  }
+  .code-card .ck { color: var(--accent-bright); }
+  .code-card .cv { color: var(--gold); }
+  .code-card .cc { color: #7d7259; font-style: italic; }
+
+  .formula {
+    background: rgba(255,255,255,0.6);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: clamp(0.78rem, 1.2vw, 1.15rem);
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .formula .fl {
+    font-family: var(--font-display);
     font-style: italic;
     color: var(--accent);
-    font-size: 1.05rem;
+    font-size: 1.05em;
+    margin-bottom: 0.35rem;
   }
-  .demo-cta code {
+
+  .venue {
+    margin-top: 0.6rem;
+    padding: 2.8rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #2a2016, #14100a);
+    border: 1px solid rgba(227,179,65,0.25);
+    border-radius: 10px;
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.7);
+  }
+  .venue .v-small {
     font-family: var(--font-mono);
-    font-style: normal;
-    background: var(--paper-warm);
-    padding: 0.1rem 0.4rem;
-    border: 1px solid var(--rule);
-    border-radius: 3px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    font-size: clamp(0.72rem, 1vw, 0.95rem);
+    color: var(--gold);
+    margin-bottom: 0.9rem;
+  }
+  .venue .v-big {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2rem, 4.4vw, 3.8rem);
+    color: var(--cream);
+    line-height: 1.05;
+  }
+  .venue .v-url {
+    font-family: var(--font-mono);
+    font-size: clamp(0.85rem, 1.2vw, 1.15rem);
+    color: #b5a988;
+    margin-top: 1rem;
+  }
+
+  .progress {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    height: 4px;
+    background: var(--accent-bright);
+    width: 0;
+    z-index: 50;
+    transition: width 0.4s ease;
+  }
+  .counter {
+    position: fixed;
+    bottom: 1.4rem;
+    right: 1.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--ink-faded);
+    z-index: 50;
+  }
+  .deck-mark {
+    position: fixed;
+    bottom: 1.4rem;
+    left: 1.8rem;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--ink-faded);
+    z-index: 50;
+  }
+  .nav-hint {
+    position: fixed;
+    top: 1.4rem;
+    right: 1.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    z-index: 50;
+    transition: opacity 0.6s ease;
   }
 </style>
 </head>
 <body>
 
-<!-- 1. Title -->
-<section class="slide title-slide">
-  <p class="eyebrow">CECS 429 Project 2</p>
-  <h1>GutenSearch</h1>
-  <p class="sub">A small search engine across ten classic novels</p>
-  <p class="sub">Built end to end, deployed live</p>
-  <p class="author">Paul Semaan &nbsp;·&nbsp; May 16, 2026</p>
-</section>
+<div class="deck" id="deck">
 
-<!-- 2. Motivation -->
-<section class="slide">
-  <p class="eyebrow">01. Motivation</p>
-  <h2>Every algorithm in this course is one formula on one slide.</h2>
-  <p>Tokenization. Inverted indexes. tf-idf. BM25. K-grams. Spelling correction. Each lives in its own lecture, gets its own worked example, and never quite meets the others.</p>
-  <p style="margin-top:0.8rem">You only see how they fit together when you actually build the thing.</p>
-  <span class="pagenum">02</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
+  <section class="slide cover dark active" data-name="Cover">
+    <p class="kicker fragment">CECS 429 · Search Engine Technology · Project 2</p>
+    <h1 class="fragment">GutenSearch</h1>
+    <p class="tagline fragment">A small search engine across ten classic novels, built end to end and deployed live.</p>
+    <p class="credit fragment">Paul Semaan · May 16, 2026 · Professor Xin Qin</p>
+    <div class="cover-shelf fragment">
+      <img src="https://www.gutenberg.org/cache/epub/345/pg345.cover.medium.jpg" alt="">
+      <img src="https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg" alt="">
+      <img src="https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg" alt="">
+      <img src="https://www.gutenberg.org/cache/epub/1661/pg1661.cover.medium.jpg" alt="">
+    </div>
+  </section>
 
-<!-- 3. Problem Statement -->
-<section class="slide warm">
-  <p class="eyebrow">02. Problem Statement</p>
-  <h2>Build a working search engine that uses everything.</h2>
-  <ul>
-    <li>Index a real natural-language corpus</li>
-    <li>Support Boolean, phrase, wildcard, and ranked queries</li>
-    <li>Offer two ranking algorithms for comparison, tf-idf cosine and BM25</li>
-    <li>Correct misspelled queries</li>
-    <li>Deploy as a static site with no backend</li>
-  </ul>
-  <span class="pagenum">03</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
+  <section class="slide" data-name="Motivation">
+    <p class="eyebrow fragment">01 · Motivation</p>
+    <h2 class="fragment">Every algorithm in this course is <em>one formula on one slide</em>.</h2>
+    <p class="lead fragment">Tokenization. Inverted indexes. tf-idf. BM25. K-grams. Spelling correction. Each one gets its own lecture, its own worked example, and never quite meets the others.</p>
+    <p class="fragment" style="margin-top:1.4rem">You only see how they fit together when you actually build the thing and type a query into it.</p>
+  </section>
 
-<!-- 4. Dataset -->
-<section class="slide">
-  <p class="eyebrow">03. Dataset</p>
-  <h2>Ten public-domain novels from Project Gutenberg.</h2>
-  <p style="margin-bottom:0.4rem"><i>Around 778,000 tokens total across ten works spanning gothic horror, detective fiction, social satire, science fiction, and children's literature.</i></p>
-  <div class="book-grid">
-    <figure><img src="https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg" alt=""><figcaption>Pride and Prejudice</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/1661/pg1661.cover.medium.jpg" alt=""><figcaption>Sherlock Holmes</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/11/pg11.cover.medium.jpg" alt=""><figcaption>Alice in Wonderland</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/46/pg46.cover.medium.jpg" alt=""><figcaption>A Christmas Carol</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg" alt=""><figcaption>Frankenstein</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/345/pg345.cover.medium.jpg" alt=""><figcaption>Dracula</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/174/pg174.cover.medium.jpg" alt=""><figcaption>The Picture of Dorian Gray</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/35/pg35.cover.medium.jpg" alt=""><figcaption>The Time Machine</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/36/pg36.cover.medium.jpg" alt=""><figcaption>War of the Worlds</figcaption></figure>
-    <figure><img src="https://www.gutenberg.org/cache/epub/74/pg74.cover.medium.jpg" alt=""><figcaption>Tom Sawyer</figcaption></figure>
-  </div>
-  <span class="pagenum">04</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 5. Architecture -->
-<section class="slide warm">
-  <p class="eyebrow">04. Architecture</p>
-  <h2>One Python script. One static page. No backend.</h2>
-  <div class="pipeline">
-    <div class="box"><b>Project Gutenberg</b>raw .txt files</div>
-    <div class="arrow">→</div>
-    <div class="box"><b>build_index.py</b>tokenize, index,<br>delta encode</div>
-    <div class="arrow">→</div>
-    <div class="box"><b>index.json</b>5.9 MB postings<br>+ k-grams</div>
-    <div class="arrow">→</div>
-    <div class="box"><b>Browser</b>fetch &amp; search<br>in-memory</div>
-  </div>
-  <p style="margin-top:0.8rem">The whole thing deploys to GitHub Pages with one click. The runtime is HTML, CSS, and a few hundred lines of JavaScript.</p>
-  <span class="pagenum">05</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 6. Indexing -->
-<section class="slide">
-  <p class="eyebrow">05. Indexing</p>
-  <h2>A positional inverted index plus a 3-gram index.</h2>
-  <div class="two-col">
+  <section class="slide warm" data-name="Problem">
+    <p class="eyebrow fragment">02 · Problem Statement</p>
+    <h2 class="fragment">Build a working search engine that <em>uses everything</em>.</h2>
     <ul>
-      <li>Lowercase, alphabetic tokens, no stemming</li>
-      <li>Stopwords stay in the index so phrase queries work</li>
-      <li>Positions stored as deltas from the previous one</li>
-      <li>Roughly 40 percent smaller than absolute positions</li>
+      <li class="fragment">Index a real natural language corpus</li>
+      <li class="fragment">Support Boolean, phrase, wildcard, and ranked queries</li>
+      <li class="fragment">Offer two ranking algorithms for comparison, tf-idf cosine and BM25</li>
+      <li class="fragment">Correct misspelled queries</li>
+      <li class="fragment">Deploy as a static site with no backend</li>
     </ul>
-    <pre><span class="c"># a posting in index.json</span>
-"darcy": {
-  <span class="k">"df"</span>: <span class="v">1</span>,
-  <span class="k">"p"</span>: [[<span class="v">"1342"</span>,
-        [<span class="v">147</span>, <span class="v">312</span>, <span class="v">88</span>, ...]]]
-}</pre>
-  </div>
-  <span class="pagenum">06</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
+  </section>
 
-<!-- 7. Query Evaluation -->
-<section class="slide warm">
-  <p class="eyebrow">06. Query Evaluation</p>
-  <h2>Four query modes, auto-detected from the input.</h2>
-  <table>
-    <tr><th>Input shape</th><th>Mode</th><th>Implementation</th></tr>
-    <tr><td><code>"two words"</code></td><td>phrase</td><td>positional posting intersection</td></tr>
-    <tr><td><code>runn*</code></td><td>wildcard</td><td>k-gram intersection plus regex filter</td></tr>
-    <tr><td><code>a AND b NOT c</code></td><td>boolean</td><td>shunting yard to RPN, set ops</td></tr>
-    <tr><td><code>vampire blood transylvania</code></td><td>ranked</td><td>tf-idf cosine or BM25, top K</td></tr>
-  </table>
-  <p style="margin-top:0.8rem">If a ranked query returns nothing, spelling correction kicks in. Damerau-Levenshtein edit distance over candidates that pass a 3-gram Jaccard threshold.</p>
-  <span class="pagenum">07</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 8. Ranking Formulas -->
-<section class="slide">
-  <p class="eyebrow">07. Ranking</p>
-  <h2>Two scoring schemes, one dropdown.</h2>
-  <div class="formula">
-    <div class="label">tf-idf cosine (lnc.ltc)</div>
-    score(q,&nbsp;d) = Σ<sub>t∈q</sub> &nbsp; (1 + log&nbsp;tf<sub>q,t</sub>) · log(N / df<sub>t</sub>) · (1 + log&nbsp;tf<sub>d,t</sub>) &nbsp;/&nbsp; ‖q‖<sub>2</sub> ‖d‖<sub>2</sub>
-  </div>
-  <div class="formula">
-    <div class="label">BM25 (k1 = 1.5, b = 0.75)</div>
-    score(q,&nbsp;d) = Σ<sub>t∈q</sub> &nbsp; idf(t) · (k1 + 1) tf<sub>d,t</sub> &nbsp;/&nbsp; (tf<sub>d,t</sub> + k1 · (1 − b + b · |d| / avgdl))
-  </div>
-  <p style="margin-top:0.4rem">Both rankers return the top K. K defaults to 10, configurable in the UI.</p>
-  <span class="pagenum">08</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 9. Results, Index Stats -->
-<section class="slide warm">
-  <p class="eyebrow">08. Results · Index</p>
-  <h2>The numbers on the actual corpus.</h2>
-  <table>
-    <tr><th>Quantity</th><th>Value</th></tr>
-    <tr><td>Documents</td><td class="num">10</td></tr>
-    <tr><td>Total tokens</td><td class="num">778,201</td></tr>
-    <tr><td>Unique terms</td><td class="num">22,794</td></tr>
-    <tr><td>Unique 3-grams</td><td class="num">5,312</td></tr>
-    <tr><td>index.json size</td><td class="num">5.9 MB</td></tr>
-    <tr><td>Load time on laptop</td><td class="num">under 1 second</td></tr>
-  </table>
-  <span class="pagenum">09</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 10. Results, Latency -->
-<section class="slide">
-  <p class="eyebrow">09. Results · Latency</p>
-  <h2>Most queries return in under 15 milliseconds.</h2>
-  <table>
-    <tr><th>Mode</th><th>Example</th><th>Median</th></tr>
-    <tr><td>Ranked tf-idf</td><td><code>whale ocean voyage</code></td><td class="num">~12 ms</td></tr>
-    <tr><td>Ranked BM25</td><td><code>whale ocean voyage</code></td><td class="num">~9 ms</td></tr>
-    <tr><td>Boolean</td><td><code>darcy AND elizabeth AND NOT bingley</code></td><td class="num">~3 ms</td></tr>
-    <tr><td>Phrase</td><td><code>"the picture of dorian gray"</code></td><td class="num">~6 ms</td></tr>
-    <tr><td>Wildcard</td><td><code>monst*</code></td><td class="num">~4 ms</td></tr>
-    <tr><td>Spell correction</td><td><code>frankinstien</code></td><td class="num">~35 ms</td></tr>
-  </table>
-  <p style="margin-top:0.6rem">All measured in Chrome on a development laptop after the index has loaded.</p>
-  <span class="pagenum">10</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 11. Results, Ranking Sanity -->
-<section class="slide warm">
-  <p class="eyebrow">10. Results · Ranking</p>
-  <h2>Both rankers agree on every sanity-check query.</h2>
-  <table>
-    <tr><th>Query</th><th>tf-idf top</th><th>BM25 top</th></tr>
-    <tr><td><code>vampire blood transylvania</code></td><td>Dracula</td><td>Dracula</td></tr>
-    <tr><td><code>mr darcy</code></td><td>Pride and Prejudice</td><td>Pride and Prejudice</td></tr>
-    <tr><td><code>scrooge christmas</code></td><td>A Christmas Carol</td><td>A Christmas Carol</td></tr>
-    <tr><td><code>rabbit hole</code></td><td>Alice in Wonderland</td><td>Alice in Wonderland</td></tr>
-    <tr><td><code>holmes baker street</code></td><td>Sherlock Holmes</td><td>Sherlock Holmes</td></tr>
-    <tr><td><code>martians invasion</code></td><td>War of the Worlds</td><td>War of the Worlds</td></tr>
-  </table>
-  <p style="margin-top:0.6rem">BM25 spreads scores more aggressively, so the gap to the second result is larger, but the ordering matches.</p>
-  <span class="pagenum">11</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
-
-<!-- 12. Conclusion and Future Work -->
-<section class="slide">
-  <p class="eyebrow">11. Conclusion &amp; Future Work</p>
-  <h2>Every class topic, one running system.</h2>
-  <div class="two-col">
-    <div>
-      <p style="font-family:var(--font-display);font-style:italic;font-size:1.2em;color:var(--ink);margin-bottom:0.4rem">What worked</p>
-      <ul>
-        <li>End-to-end IR pipeline in a few hundred lines</li>
-        <li>Static deploy, one URL</li>
-        <li>Both rankers measurable side by side</li>
-      </ul>
+  <section class="slide" data-name="Dataset">
+    <p class="eyebrow fragment">03 · Methods · Dataset</p>
+    <h2 class="fragment">Ten public domain novels from Project Gutenberg.</h2>
+    <p class="fragment" style="margin-bottom:1.2rem"><i>Around 778,000 tokens spanning gothic horror, detective fiction, social satire, science fiction, and children's literature.</i></p>
+    <div class="book-grid fragment">
+      <figure><img src="https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg" alt=""><figcaption>Pride and Prejudice</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/1661/pg1661.cover.medium.jpg" alt=""><figcaption>Sherlock Holmes</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/11/pg11.cover.medium.jpg" alt=""><figcaption>Alice in Wonderland</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/46/pg46.cover.medium.jpg" alt=""><figcaption>A Christmas Carol</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg" alt=""><figcaption>Frankenstein</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/345/pg345.cover.medium.jpg" alt=""><figcaption>Dracula</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/174/pg174.cover.medium.jpg" alt=""><figcaption>The Picture of Dorian Gray</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/35/pg35.cover.medium.jpg" alt=""><figcaption>The Time Machine</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/36/pg36.cover.medium.jpg" alt=""><figcaption>War of the Worlds</figcaption></figure>
+      <figure><img src="https://www.gutenberg.org/cache/epub/74/pg74.cover.medium.jpg" alt=""><figcaption>Tom Sawyer</figcaption></figure>
     </div>
-    <div>
-      <p style="font-family:var(--font-display);font-style:italic;font-size:1.2em;color:var(--ink);margin-bottom:0.4rem">What is next</p>
-      <ul>
-        <li>Porter stemming to close the run / running gap</li>
-        <li>Query expansion via synonyms</li>
-        <li>Sharded index to scale past ten books</li>
-        <li>Learning to rank with labeled judgments</li>
-        <li>A real noisy-channel spelling model</li>
-      </ul>
+  </section>
+
+  <section class="slide dark" data-name="Architecture">
+    <p class="eyebrow fragment">04 · Methods · Architecture</p>
+    <h2 class="fragment">One Python script. One static page. <em>No backend.</em></h2>
+    <div class="pipeline">
+      <div class="stage fragment"><b>Gutenberg</b><span>ten raw text files</span></div>
+      <div class="join fragment">&rarr;</div>
+      <div class="stage fragment"><b>build_index.py</b><span>tokenize, index,<br>delta encode</span></div>
+      <div class="join fragment">&rarr;</div>
+      <div class="stage fragment"><b>index.json</b><span>5.9 MB postings<br>plus k-grams</span></div>
+      <div class="join fragment">&rarr;</div>
+      <div class="stage fragment"><b>Browser</b><span>fetch and search<br>fully in memory</span></div>
     </div>
-  </div>
-  <span class="pagenum">12</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
+    <p class="fragment" style="margin-top:1.6rem">The whole thing deploys to GitHub Pages with one click. The runtime is HTML, CSS, and a few hundred lines of JavaScript.</p>
+  </section>
 
-<!-- 13. Target Venue -->
-<section class="slide warm">
-  <p class="eyebrow">12. Target Venue</p>
-  <h2 style="margin-bottom:0.4rem">Where this work belongs.</h2>
-  <div class="venue-banner">
-    <div class="small">Target venue for this project</div>
-    <div class="big">SIGIR Demonstrations Track</div>
-    <div class="url">paulsemaan007.github.io/gutensearch</div>
-  </div>
-  <ul style="margin-top:0.4rem">
-    <li>SIGIR is the top venue in IR, h5-index 95 in 2024</li>
-    <li>The Demonstrations track exists for working systems exactly like this one</li>
-    <li>Implements the classical techniques SIGIR has published on for decades</li>
-    <li>A static deploy makes the demo trivial for reviewers and attendees</li>
-  </ul>
-  <span class="pagenum">13</span>
-  <span class="footer-mark">GutenSearch</span>
-</section>
+  <section class="slide" data-name="Indexing">
+    <p class="eyebrow fragment">05 · Methods · Indexing</p>
+    <h2 class="fragment">A positional inverted index, plus a 3-gram index.</h2>
+    <div class="cols">
+      <ul>
+        <li class="fragment">Lowercase, alphabetic tokens, no stemming</li>
+        <li class="fragment">Stopwords stay in so phrase queries still work</li>
+        <li class="fragment">Positions stored as deltas from the previous one</li>
+        <li class="fragment">Roughly 40 percent smaller than absolute positions</li>
+      </ul>
+      <div class="code-card fragment">
+        <div class="cc">a posting inside index.json</div>
+        darcy<br>
+        &nbsp;&nbsp;<span class="ck">df</span> &nbsp;<span class="cv">1</span><br>
+        &nbsp;&nbsp;<span class="ck">postings</span> &nbsp;doc <span class="cv">1342</span><br>
+        &nbsp;&nbsp;<span class="ck">at positions</span> &nbsp;<span class="cv">147, 312, 88, 203 ...</span>
+      </div>
+    </div>
+  </section>
 
-<!-- 14. Demo / Thank You -->
-<section class="slide title-slide">
-  <p class="eyebrow">Live Demo</p>
-  <h1 style="font-size:clamp(2.6rem, 6vw, 4.6rem)">Let's search the classics.</h1>
-  <p class="sub">paulsemaan007.github.io/gutensearch</p>
-  <p class="author">Thank you. Questions welcome.</p>
-</section>
+  <section class="slide warm" data-name="Query Modes">
+    <p class="eyebrow fragment">06 · Methods · Query Evaluation</p>
+    <h2 class="fragment">Four query modes, <em>auto-detected</em> from the input.</h2>
+    <table class="fragment">
+      <thead><tr><th>Input shape</th><th>Mode</th><th>How it runs</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">"two words"</td><td>phrase</td><td>positional posting intersection</td></tr>
+        <tr><td class="mono">runn*</td><td>wildcard</td><td>k-gram intersection, then regex filter</td></tr>
+        <tr><td class="mono">a AND b NOT c</td><td>boolean</td><td>shunting yard to RPN, then set ops</td></tr>
+        <tr><td class="mono">vampire blood transylvania</td><td>ranked</td><td>tf-idf cosine or BM25, top K</td></tr>
+      </tbody>
+    </table>
+    <p class="fragment" style="margin-top:1.4rem">When a ranked query returns nothing, spelling correction kicks in. Damerau-Levenshtein edit distance over candidates that pass a 3-gram Jaccard threshold.</p>
+  </section>
+
+  <section class="slide" data-name="Ranking">
+    <p class="eyebrow fragment">07 · Methods · Ranking</p>
+    <h2 class="fragment">Two scoring schemes, <em>one dropdown</em>.</h2>
+    <div class="formula fragment">
+      <div class="fl">tf-idf cosine, lnc.ltc weighting</div>
+      score(q, d) = &Sigma;<sub>t in q</sub> &nbsp; (1 + log tf<sub>q,t</sub>) &middot; log(N / df<sub>t</sub>) &middot; (1 + log tf<sub>d,t</sub>) &nbsp;/&nbsp; &Vert;q&Vert;<sub>2</sub> &Vert;d&Vert;<sub>2</sub>
+    </div>
+    <div class="formula fragment">
+      <div class="fl">BM25, with k1 = 1.5 and b = 0.75</div>
+      score(q, d) = &Sigma;<sub>t in q</sub> &nbsp; idf(t) &middot; (k1 + 1) tf<sub>d,t</sub> &nbsp;/&nbsp; (tf<sub>d,t</sub> + k1 (1 &minus; b + b &middot; |d| / avgdl))
+    </div>
+    <p class="fragment">Both rankers return the top K. K defaults to 10 and is configurable in the UI.</p>
+  </section>
+
+  <section class="slide dark" data-name="Results, Index">
+    <p class="eyebrow fragment">08 · Results · The Index</p>
+    <h2 class="fragment">The numbers on the actual corpus.</h2>
+    <div class="stat-grid">
+      <div class="stat fragment"><div class="figure" data-count="10">10</div><div class="caption">documents</div></div>
+      <div class="stat fragment"><div class="figure" data-count="778201">778,201</div><div class="caption">total tokens</div></div>
+      <div class="stat fragment"><div class="figure" data-count="22794">22,794</div><div class="caption">unique terms</div></div>
+      <div class="stat fragment"><div class="figure" data-count="5312">5,312</div><div class="caption">unique 3-grams</div></div>
+      <div class="stat fragment"><div class="figure">5.9 MB</div><div class="caption">index.json size</div></div>
+      <div class="stat fragment"><div class="figure">&lt; 1 s</div><div class="caption">load time on a laptop</div></div>
+    </div>
+  </section>
+
+  <section class="slide" data-name="Results, Latency">
+    <p class="eyebrow fragment">09 · Results · Latency</p>
+    <h2 class="fragment">Most queries return in <em>under 15 milliseconds</em>.</h2>
+    <table class="fragment">
+      <thead><tr><th>Mode</th><th>Example query</th><th>Median</th></tr></thead>
+      <tbody>
+        <tr><td>Ranked tf-idf</td><td class="mono">whale ocean voyage</td><td class="mono">~12 ms</td></tr>
+        <tr><td>Ranked BM25</td><td class="mono">whale ocean voyage</td><td class="mono">~9 ms</td></tr>
+        <tr><td>Boolean</td><td class="mono">darcy AND elizabeth AND NOT bingley</td><td class="mono">~3 ms</td></tr>
+        <tr><td>Phrase</td><td class="mono">"the picture of dorian gray"</td><td class="mono">~6 ms</td></tr>
+        <tr><td>Wildcard</td><td class="mono">monst*</td><td class="mono">~4 ms</td></tr>
+        <tr><td>Spelling correction</td><td class="mono">frankinstien</td><td class="mono">~35 ms</td></tr>
+      </tbody>
+    </table>
+    <p class="fragment" style="margin-top:1.2rem">All measured in Chrome on a development laptop after the index has loaded.</p>
+  </section>
+
+  <section class="slide warm" data-name="Results, Ranking">
+    <p class="eyebrow fragment">10 · Results · Ranking Quality</p>
+    <h2 class="fragment">Both rankers agree on <em>every sanity check</em>.</h2>
+    <table class="fragment">
+      <thead><tr><th>Query</th><th>tf-idf top result</th><th>BM25 top result</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">vampire blood transylvania</td><td class="win">Dracula</td><td class="win">Dracula</td></tr>
+        <tr><td class="mono">mr darcy</td><td class="win">Pride and Prejudice</td><td class="win">Pride and Prejudice</td></tr>
+        <tr><td class="mono">scrooge christmas</td><td class="win">A Christmas Carol</td><td class="win">A Christmas Carol</td></tr>
+        <tr><td class="mono">rabbit hole</td><td class="win">Alice in Wonderland</td><td class="win">Alice in Wonderland</td></tr>
+        <tr><td class="mono">holmes baker street</td><td class="win">Sherlock Holmes</td><td class="win">Sherlock Holmes</td></tr>
+        <tr><td class="mono">martians invasion</td><td class="win">War of the Worlds</td><td class="win">War of the Worlds</td></tr>
+      </tbody>
+    </table>
+    <p class="fragment" style="margin-top:1.1rem">BM25 spreads scores more aggressively, so the gap to the second result is wider, but the ordering matches.</p>
+  </section>
+
+  <section class="slide" data-name="Conclusion">
+    <p class="eyebrow fragment">11 · Conclusion and Future Work</p>
+    <h2 class="fragment">Every class topic, <em>one running system</em>.</h2>
+    <div class="cols">
+      <div>
+        <div class="col-head fragment">What worked</div>
+        <ul>
+          <li class="fragment">End to end IR pipeline in a few hundred lines</li>
+          <li class="fragment">Static deploy, one live URL</li>
+          <li class="fragment">Both rankers measurable side by side</li>
+        </ul>
+      </div>
+      <div>
+        <div class="col-head fragment">What is next</div>
+        <ul>
+          <li class="fragment">Porter stemming to close the run and running gap</li>
+          <li class="fragment">Query expansion through synonyms</li>
+          <li class="fragment">Sharded index to scale past ten books</li>
+          <li class="fragment">Learning to rank with labeled judgments</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide dark" data-name="Target Venue">
+    <p class="eyebrow fragment">12 · Target Venue</p>
+    <h2 class="fragment">Where this work belongs.</h2>
+    <div class="venue fragment">
+      <div class="v-small">Target venue for this project</div>
+      <div class="v-big">SIGIR Demonstrations Track</div>
+      <div class="v-url">paulsemaan007.github.io/gutensearch</div>
+    </div>
+    <ul style="margin-top:1.4rem">
+      <li class="fragment">SIGIR is the top venue in information retrieval, h5-index of 95 in 2024</li>
+      <li class="fragment">The Demonstrations track exists for working systems exactly like this one</li>
+      <li class="fragment">A static deploy makes the demo trivial for reviewers and attendees</li>
+    </ul>
+  </section>
+
+  <section class="slide cover dark" data-name="Demo">
+    <p class="kicker fragment">Live Demo</p>
+    <h1 class="fragment">Let's search<br>the classics.</h1>
+    <p class="tagline fragment">paulsemaan007.github.io/gutensearch</p>
+    <p class="credit fragment">Thank you. Questions welcome.</p>
+  </section>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="deck-mark">GutenSearch</div>
+<div class="counter" id="counter">01 / 14</div>
+<div class="nav-hint" id="navHint">arrow keys navigate &nbsp; F fullscreen</div>
 
 <script>
-  document.addEventListener("keydown", function(e) {
-    const slides = document.querySelectorAll(".slide");
-    const current = Array.from(slides).findIndex(s => {
-      const r = s.getBoundingClientRect();
-      return r.top >= -window.innerHeight / 2 && r.top < window.innerHeight / 2;
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const progress = document.getElementById("progress");
+  const counter = document.getElementById("counter");
+  const navHint = document.getElementById("navHint");
+  let current = 0;
+  let hintTimer = setTimeout(function () { navHint.style.opacity = "0"; }, 6000);
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function revealFragments(slide) {
+    const frags = slide.querySelectorAll(".fragment");
+    frags.forEach(function (f, i) {
+      f.classList.remove("shown");
+      setTimeout(function () { f.classList.add("shown"); }, 180 + i * 130);
     });
-    if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " " || e.key === "PageDown") {
-      e.preventDefault();
-      if (current >= 0 && current < slides.length - 1) {
-        slides[current + 1].scrollIntoView({ behavior: "smooth" });
+  }
+
+  function animateCounts(slide) {
+    slide.querySelectorAll("[data-count]").forEach(function (el) {
+      const target = parseInt(el.dataset.count, 10);
+      if (isNaN(target)) return;
+      const dur = 900;
+      const start = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - start) / dur);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(target * eased).toLocaleString();
+        if (t < 1) requestAnimationFrame(step);
       }
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") {
-      e.preventDefault();
-      if (current > 0) {
-        slides[current - 1].scrollIntoView({ behavior: "smooth" });
-      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  function goTo(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides[current].classList.remove("active");
+    current = n;
+    const slide = slides[current];
+    slide.classList.add("active");
+    progress.style.width = ((current + 1) / slides.length * 100) + "%";
+    counter.textContent = pad(current + 1) + " / " + pad(slides.length);
+    revealFragments(slide);
+    animateCounts(slide);
+  }
+
+  function next() { if (current < slides.length - 1) goTo(current + 1); }
+  function prev() { if (current > 0) goTo(current - 1); }
+
+  document.addEventListener("keydown", function (e) {
+    if (["ArrowRight", "ArrowDown", " ", "PageDown", "Enter"].includes(e.key)) {
+      e.preventDefault(); next();
+    } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) {
+      e.preventDefault(); prev();
+    } else if (e.key === "Home") {
+      e.preventDefault(); goTo(0);
+    } else if (e.key === "End") {
+      e.preventDefault(); goTo(slides.length - 1);
+    } else if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
     }
   });
+
+  document.getElementById("deck").addEventListener("click", function (e) {
+    const x = e.clientX / window.innerWidth;
+    if (x < 0.25) prev(); else next();
+  });
+
+  window.addEventListener("pointerdown", function () {
+    clearTimeout(hintTimer);
+    navHint.style.opacity = "0";
+  }, { once: true });
+
+  goTo(0);
 </script>
 
 </body>
