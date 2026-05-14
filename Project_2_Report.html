@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GutenSearch — A Mini Search Engine over Classic Literature</title>
+<title>GutenSearch, A Mini Search Engine over Classic Literature</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400&family=Crimson+Pro:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -336,7 +336,7 @@
 </header>
 
 <div class="abstract">
-  <p>GutenSearch is a working mini search engine built over ten classic public-domain novels from Project Gutenberg. The system implements the full stack of techniques covered in CECS 429 in one running pipeline: tokenization, a positional inverted index, a 3-gram index for wildcard queries, Boolean and phrase queries, ranked retrieval using both tf-idf cosine and BM25, and Damerau-Levenshtein spelling correction. The build side is a single Python script that turns raw books into a JSON index; the search side is a static web page that runs every query directly in the browser, with no backend. On a corpus of 778,201 tokens across 22,794 unique terms, the index serializes to 5.9 MB and most queries return in under 15 milliseconds.</p>
+  <p>GutenSearch is a working mini search engine built over ten classic public-domain novels from Project Gutenberg. The system implements the full stack of techniques covered in CECS 429 in one running pipeline. That includes tokenization, a positional inverted index, a 3-gram index for wildcard queries, Boolean and phrase queries, ranked retrieval using both tf-idf cosine and BM25, and Damerau-Levenshtein spelling correction. The build side is a single Python script that turns raw books into a JSON index. The search side is a static web page that runs every query directly in the browser, with no backend. On a corpus of 778,201 tokens across 22,794 unique terms, the index serializes to 5.9 MB and most queries return in under 15 milliseconds.</p>
 </div>
 
 <h2><span class="num">01</span>Introduction</h2>
@@ -351,7 +351,7 @@
 
 <p>The methods used here are textbook IR, and the canonical reference is Manning, Raghavan, and Schütze's <i>Introduction to Information Retrieval</i> [1]. The tf-idf scoring scheme, cosine similarity ranking, SMART notation, positional postings model, k-gram index for wildcards, and Damerau-Levenshtein spelling correction all come from that book.</p>
 
-<p>The BM25 ranking function I implemented is the version derived by Robertson and Zaragoza [2], which gives the standard parameter defaults (k1 ≈ 1.5, b ≈ 0.75) that are still considered reasonable today. BM25 differs from tf-idf cosine in two ways that matter for a heterogeneous corpus: it saturates term frequency through the k1 parameter, and it normalizes by document length explicitly. The latter matters on this corpus because the books range from around 27,000 tokens (<i>Alice in Wonderland</i>) up to 163,000 tokens (<i>Dracula</i>), a roughly 6x ratio.</p>
+<p>The BM25 ranking function I implemented is the version derived by Robertson and Zaragoza [2], which gives the standard parameter defaults (k1 ≈ 1.5, b ≈ 0.75) that are still considered reasonable today. BM25 differs from tf-idf cosine in two ways that matter for a heterogeneous corpus. It saturates term frequency through the k1 parameter, and it normalizes by document length explicitly. The latter matters on this corpus because the books range from around 27,000 tokens (<i>Alice in Wonderland</i>) up to 163,000 tokens (<i>Dracula</i>), a roughly 6x ratio.</p>
 
 <p>For a production comparison, Apache Lucene [3] is the canonical open-source search engine, used inside both Elasticsearch and Solr. Its architecture matches the general shape of GutenSearch, just at much larger scale and with more sophisticated index encoding (variable-byte, FOR, PFOR compression). GutenSearch can be thought of as a minimal in-browser analog of one Lucene segment with a small corpus.</p>
 
@@ -436,7 +436,7 @@
 
 <p>Stopwords are recorded as metadata but kept in the postings, which is necessary for phrase queries to work properly. A phrase like <em>"of the dead"</em> would break if <em>of</em> and <em>the</em> were thrown away. The ranked retrieval algorithms naturally down-weight stopwords through idf anyway.</p>
 
-<p>The positional inverted index maps each unique term to a list of (document id, position list) pairs. To keep the JSON file size down, position lists use delta encoding: the first position is stored absolutely, every subsequent one as the difference from the previous. This reduces position storage by roughly 40 percent compared to absolute positions.</p>
+<p>The positional inverted index maps each unique term to a list of (document id, position list) pairs. To keep the JSON file size down, position lists use delta encoding. The first position is stored absolutely and every subsequent one as the difference from the previous. This reduces position storage by roughly 40 percent compared to absolute positions.</p>
 
 <pre><span style="color:#6b7d6e">// a posting in index.json</span>
 "darcy": {
@@ -452,7 +452,7 @@
 
 <p><b>Boolean queries</b> go through a small shunting-yard parser that converts to reverse Polish notation, with AND and OR as binary operators. <code>NOT</code> followed by a term is collapsed into a single negated token at the lexing stage, which avoids the awkwardness of mixing unary and binary operators in the same precedence table. The evaluator walks the RPN expression and performs set intersection, union, or difference against the full document set.</p>
 
-<p><b>Phrase queries</b> retrieve the positional posting lists for all n terms in the phrase, intersect the document sets, then for each candidate document walk the position list of the first term and binary-search every subsequent term's positions for the consecutive offset. The first match in a document is enough; the algorithm short-circuits.</p>
+<p><b>Phrase queries</b> retrieve the positional posting lists for all n terms in the phrase, intersect the document sets, then for each candidate document walk the position list of the first term and binary-search every subsequent term's positions for the consecutive offset. The first match in a document is enough and the algorithm short-circuits.</p>
 
 <p><b>Ranked queries</b> use either tf-idf cosine or BM25, selectable in the UI. Both return the top K, configurable in the UI with a default of 10. The scoring formulas are below.</p>
 
@@ -537,7 +537,7 @@
 
 <h3>4.4 Wildcard and Spelling Correction</h3>
 
-<p>The wildcard query <code>monst*</code> expands to the term set <em>{monster, monsters, monstrous, monstrosity}</em> and returns three documents: <i>Frankenstein</i>, <i>Dracula</i>, and <i>The Picture of Dorian Gray</i>. The query <code>*ation</code> expands to over 200 terms, which exposes a small limitation: very general wildcard patterns produce too many candidates to display usefully. A real system would either truncate or fall back to ranked retrieval over the wildcard expansion.</p>
+<p>The wildcard query <code>monst*</code> expands to the term set <em>{monster, monsters, monstrous, monstrosity}</em> and returns three documents, <i>Frankenstein</i>, <i>Dracula</i>, and <i>The Picture of Dorian Gray</i>. The query <code>*ation</code> expands to over 200 terms, which exposes a small limitation. Very general wildcard patterns produce too many candidates to display usefully. A real system would either truncate or fall back to ranked retrieval over the wildcard expansion.</p>
 
 <p>For spelling, the correction component handles common misspellings well. <em>frankinstien</em> gets corrected to <em>frankenstein</em>, <em>elisabeth</em> to <em>elizabeth</em>, <em>scroge</em> to <em>scrooge</em>. The correction breaks down for misspellings more than three edits away from any vocabulary term, or for misspellings whose trigram overlap with every candidate falls below the 0.3 Jaccard threshold.</p>
 
@@ -560,14 +560,14 @@
 
 <p>The most useful next steps, in rough order of impact, would be these. First, adding Porter stemming would close the <code>run</code> / <code>running</code> gap that wildcards currently paper over. Second, query expansion through synonym lookup or pseudo-relevance feedback would help recall when the user's vocabulary differs from the author's. Third, the index could be sharded by alphabet range and loaded lazily, which would let the same architecture scale to much larger corpora. Fourth, learning to rank using labeled relevance judgments on a small set of queries could improve ordering beyond what either tf-idf cosine or BM25 produces on their own. Fifth, the spelling correction component could be replaced with a proper noisy-channel model trained on actual misspellings rather than the flat edit-distance ranker.</p>
 
-<p>There is also a natural extension toward indexing the user's own document collection (research papers, course notes, personal email) instead of a fixed corpus. The architecture supports this directly: replace the corpus list in <code>build_index.py</code> with a directory walk, and everything downstream works unchanged.</p>
+<p>There is also a natural extension toward indexing the user's own document collection (research papers, course notes, personal email) instead of a fixed corpus. The architecture supports this directly. Just replace the corpus list in <code>build_index.py</code> with a directory walk and everything downstream works unchanged.</p>
 
 <h2><span class="num">06</span>References</h2>
 
 <div class="refs">
 <ol>
   <li>C. D. Manning, P. Raghavan, and H. Schütze, <i>Introduction to Information Retrieval</i>. Cambridge University Press, 2008. https://nlp.stanford.edu/IR-book/</li>
-  <li>S. E. Robertson and H. Zaragoza, "The Probabilistic Relevance Framework: BM25 and Beyond." <i>Foundations and Trends in Information Retrieval</i>, vol. 3, no. 4, pp. 333-389, 2009.</li>
+  <li>S. E. Robertson and H. Zaragoza, "The Probabilistic Relevance Framework, BM25 and Beyond." <i>Foundations and Trends in Information Retrieval</i>, vol. 3, no. 4, pp. 333-389, 2009.</li>
   <li>The Apache Software Foundation, "Apache Lucene," 2024. https://lucene.apache.org/</li>
   <li>M. D. Kernighan, K. W. Church, and W. A. Gale, "A Spelling Correction Program Based on a Noisy Channel Model." <i>Proceedings of the 13th Conference on Computational Linguistics</i>, Helsinki, Finland, 1990, pp. 205-210.</li>
   <li>R. C. Angell, G. E. Freund, and P. Willett, "Automatic Spelling Correction Using a Trigram Similarity Measure." <i>Information Processing &amp; Management</i>, vol. 19, no. 4, pp. 255-261, 1983.</li>
